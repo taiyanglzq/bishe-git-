@@ -1,26 +1,60 @@
 <template>
   <div class="login-page">
-    <section class="login-hero">
-      <p class="eyebrow">Personalized Campus Assistant</p>
-      <h1>个性化智慧校园助手</h1>
-      <p>面向学生、教师和管理员，整合公告、预约、活动、签到、推荐和统计能力。</p>
-    </section>
+    <div class="login-container">
+      <!-- 左侧品牌区 -->
+      <div class="login-hero">
+        <div class="login-hero-badge">Campus Assistant</div>
+        <h1>个性化<br />智慧校园助手</h1>
+        <p>整合公告、预约、活动、签到、推荐与统计分析能力，为学生、教师和管理员提供一站式校园服务。</p>
+        <div class="login-hero-features">
+          <div class="login-hero-feature">
+            <el-icon><Calendar /></el-icon> 场地预约
+          </div>
+          <div class="login-hero-feature">
+            <el-icon><Star /></el-icon> 活动签到
+          </div>
+          <div class="login-hero-feature">
+            <el-icon><MagicStick /></el-icon> 智能推荐
+          </div>
+        </div>
+      </div>
 
-    <el-card class="login-card" shadow="never">
-      <h2>账号登录</h2>
-      <p class="hint">学生账号默认为学号，初始密码为身份证后 6 位。</p>
-      <el-form :model="form" label-position="top" @keyup.enter="submit">
-        <el-form-item label="账号">
-          <el-input v-model="form.username" placeholder="例如 23050539414" />
-        </el-form-item>
-        <el-form-item label="密码">
-          <el-input v-model="form.password" type="password" show-password placeholder="默认身份证后 6 位" />
-        </el-form-item>
-        <el-button type="primary" :loading="loading" class="login-button" @click="submit">
-          登录系统
-        </el-button>
-      </el-form>
-    </el-card>
+      <!-- 右侧登录表单 -->
+      <div class="login-form-panel">
+        <h2>账号登录</h2>
+        <p class="login-form-hint">学生账号默认为学号，初始密码为身份证后 6 位</p>
+
+        <el-form :model="form" label-position="top" @keyup.enter="submit">
+          <el-form-item label="账号">
+            <el-input
+              v-model="form.username"
+              placeholder="例如 23050539414"
+              size="large"
+              :prefix-icon="User"
+            />
+          </el-form-item>
+          <el-form-item label="密码">
+            <el-input
+              v-model="form.password"
+              type="password"
+              show-password
+              placeholder="默认身份证后 6 位"
+              size="large"
+              :prefix-icon="Lock"
+            />
+          </el-form-item>
+          <el-button
+            type="primary"
+            size="large"
+            :loading="loading"
+            class="login-submit-btn"
+            @click="submit"
+          >
+            登录系统
+          </el-button>
+        </el-form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -28,6 +62,7 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { User, Lock, Calendar, Star, MagicStick } from '@element-plus/icons-vue'
 import { useAuthStore } from '../../stores/auth'
 
 const router = useRouter()

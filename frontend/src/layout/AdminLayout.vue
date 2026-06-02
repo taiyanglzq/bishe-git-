@@ -1,74 +1,154 @@
 <template>
   <div class="app-shell">
-    <aside class="sidebar">
-      <div class="brand">
-        <span class="brand-mark">CA</span>
-        <div>
+    <!-- 侧边栏 -->
+    <aside class="sidebar" :class="{ collapsed: sidebarCollapsed }">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">CA</div>
+        <div class="sidebar-brand-text">
           <strong>智慧校园助手</strong>
           <small>Campus Assistant</small>
         </div>
       </div>
-      <nav>
-        <RouterLink v-for="item in visibleMenus" :key="item.path" :to="item.path">
-          {{ item.title }}
+
+      <nav class="sidebar-nav">
+        <div class="sidebar-nav-section">主导航</div>
+        <RouterLink
+          v-for="item in mainMenus"
+          :key="item.path"
+          :to="item.path"
+          class="sidebar-nav-item"
+          :class="{ active: route.path === item.path }"
+        >
+          <el-icon class="nav-icon"><component :is="item.icon" /></el-icon>
+          <span class="nav-label">{{ item.title }}</span>
         </RouterLink>
+
+        <template v-if="adminMenus.length">
+          <div class="sidebar-nav-section">系统管理</div>
+          <RouterLink
+            v-for="item in adminMenus"
+            :key="item.path"
+            :to="item.path"
+            class="sidebar-nav-item"
+            :class="{ active: route.path === item.path }"
+          >
+            <el-icon class="nav-icon"><component :is="item.icon" /></el-icon>
+            <span class="nav-label">{{ item.title }}</span>
+          </RouterLink>
+        </template>
       </nav>
     </aside>
 
-    <main class="main-panel">
+    <!-- 主面板 -->
+    <main class="main-panel" :class="{ expanded: sidebarCollapsed }">
+      <!-- 顶栏 -->
       <header class="topbar">
-        <div>
-          <h1>{{ currentTitle }}</h1>
-          <p>当前用户：{{ authStore.user?.realName || authStore.user?.username || '未加载' }} · {{ roleName }}</p>
+        <div class="topbar-left">
+          <button class="topbar-collapse-btn" @click="sidebarCollapsed = !sidebarCollapsed">
+            <el-icon><Fold v-if="!sidebarCollapsed" /><Expand v-else /></el-icon>
+          </button>
+          <div class="topbar-breadcrumb">
+            <el-icon><HomeFilled /></el-icon>
+            <span>{{ currentTitle }}</span>
+          </div>
         </div>
-        <div class="top-actions">
-          <el-button @click="router.push('/profile')">个人中心</el-button>
-          <el-button @click="logout">退出登录</el-button>
+
+        <div class="topbar-right">
+          <button class="topbar-notification-btn" @click="router.push('/notification')">
+            <el-icon><Bell /></el-icon>
+            <span v-if="unreadCount" class="topbar-notification-dot"></span>
+          </button>
+
+          <el-dropdown trigger="click" @command="handleUserCommand">
+            <div class="topbar-user">
+              <div class="topbar-user-avatar">{{ userInitial }}</div>
+              <div class="topbar-user-info">
+                <strong>{{ authStore.user?.realName || authStore.user?.username || '用户' }}</strong>
+                <span>{{ roleName }}</span>
+              </div>
+              <el-icon style="color: var(--text-muted); font-size: 12px;"><ArrowDown /></el-icon>
+            </div>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="profile">
+                  <el-icon><User /></el-icon> 个人中心
+                </el-dropdown-item>
+                <el-dropdown-item command="logout" divided>
+                  <el-icon><SwitchButton /></el-icon> 退出登录
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </header>
-      <section class="content-card">
-        <RouterView />
+
+      <!-- 内容区 -->
+      <section class="content-area">
+        <RouterView v-slot="{ Component }">
+          <transition name="fade-slide" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </RouterView>
       </section>
     </main>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import {
+  HomeFilled, Bell, User, SwitchButton, ArrowDown, Fold, Expand,
+  DataBoard, ChatLineSquare, OfficeBuilding, Calendar,
+  Star, MagicStick, Setting, Document, Tickets
+} from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-const menus = [
-  { path: '/dashboard', title: '首页工作台', roles: ['STUDENT', 'TEACHER', 'ADMIN'] },
-  { path: '/notice', title: '校园公告', roles: ['STUDENT', 'TEACHER', 'ADMIN'] },
-  { path: '/venue', title: '场地资源', roles: ['STUDENT', 'TEACHER', 'ADMIN'] },
-  { path: '/booking', title: '场地预约', roles: ['STUDENT', 'TEACHER', 'ADMIN'] },
-  { path: '/activity', title: '活动签到', roles: ['STUDENT', 'TEACHER', 'ADMIN'] },
-  { path: '/recommendation', title: '个性化推荐', roles: ['STUDENT', 'TEACHER', 'ADMIN'] },
-  { path: '/notification', title: '通知中心', roles: ['STUDENT', 'TEACHER', 'ADMIN'] },
-  { path: '/log', title: '日志审计', roles: ['ADMIN'] },
-  { path: '/system', title: '系统管理', roles: ['TEACHER', 'ADMIN'] }
-]
+const sidebarCollapsed = ref(false)
+const unreadCount = ref(0)
 
 const currentTitle = computed(() => route.meta.title || '智慧校园助手')
+
 const roleName = computed(() => {
-  const roleCode = authStore.user?.roleCode
-  if (roleCode === 'ADMIN') return '管理员'
-  if (roleCode === 'TEACHER') return '教师'
-  return '学生'
-})
-const visibleMenus = computed(() => {
-  const roleCode = authStore.user?.roleCode || 'STUDENT'
-  return menus.filter((item) => item.roles.includes(roleCode))
+  const map = { ADMIN: '管理员', TEACHER: '教师', STUDENT: '学生' }
+  return map[authStore.user?.roleCode] || '学生'
 })
 
-function logout() {
-  authStore.logout()
-  router.replace('/login')
+const userInitial = computed(() => {
+  const name = authStore.user?.realName || authStore.user?.username || 'U'
+  return name.charAt(0).toUpperCase()
+})
+
+const allMenus = [
+  { path: '/dashboard', title: '首页工作台', icon: DataBoard, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
+  { path: '/notice', title: '校园公告', icon: ChatLineSquare, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
+  { path: '/venue', title: '场地资源', icon: OfficeBuilding, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
+  { path: '/booking', title: '场地预约', icon: Calendar, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
+  { path: '/activity', title: '活动签到', icon: Star, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
+  { path: '/recommendation', title: '个性化推荐', icon: MagicStick, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
+  { path: '/notification', title: '通知中心', icon: Bell, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
+  { path: '/log', title: '日志审计', icon: Document, roles: ['ADMIN'], group: 'admin' },
+  { path: '/system', title: '系统管理', icon: Setting, roles: ['TEACHER', 'ADMIN'], group: 'admin' }
+]
+
+const visibleMenus = computed(() => {
+  const role = authStore.user?.roleCode || 'STUDENT'
+  return allMenus.filter(m => m.roles.includes(role))
+})
+
+const mainMenus = computed(() => visibleMenus.value.filter(m => m.group === 'main'))
+const adminMenus = computed(() => visibleMenus.value.filter(m => m.group === 'admin'))
+
+function handleUserCommand(cmd) {
+  if (cmd === 'profile') router.push('/profile')
+  else if (cmd === 'logout') {
+    authStore.logout()
+    router.replace('/login')
+  }
 }
 
 onMounted(() => {
