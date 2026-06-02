@@ -1,0 +1,23 @@
+# IDE
+.idea/
+.vscode/
+
+# Java
+backend/target/
+*.class
+
+# Temporary debug files
+backend/CheckBCrypt.java
+backend/CheckBCrypt.class
+backend/cp.txt
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,151 @@
+CREATE DATABASE IF NOT EXISTS campus_assistant DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_general_ci;
+USE campus_assistant;
+
+DROP TABLE IF EXISTS ca_user;
+CREATE TABLE ca_user (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(64) NOT NULL UNIQUE,
+  password VARCHAR(128) NOT NULL,
+  real_name VARCHAR(64) NOT NULL,
+  student_no VARCHAR(64),
+  college VARCHAR(64),
+  id_card_last6 VARCHAR(16),
+  role_code VARCHAR(32) NOT NULL,
+  status TINYINT NOT NULL DEFAULT 1,
+  initial_password TINYINT NOT NULL DEFAULT 1,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+DROP TABLE IF EXISTS ca_notice;
+CREATE TABLE ca_notice (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  title VARCHAR(128) NOT NULL,
+  category VARCHAR(64),
+  content TEXT NOT NULL,
+  status TINYINT NOT NULL DEFAULT 1,
+  view_count BIGINT NOT NULL DEFAULT 0,
+  publisher_id BIGINT,
+  scope_type VARCHAR(32) NOT NULL DEFAULT 'SCHOOL',
+  scope_college VARCHAR(64),
+  deleted TINYINT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+DROP TABLE IF EXISTS ca_venue;
+CREATE TABLE ca_venue (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(128) NOT NULL,
+  location VARCHAR(128),
+  capacity INT NOT NULL DEFAULT 1,
+  status TINYINT NOT NULL DEFAULT 1,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+DROP TABLE IF EXISTS ca_booking;
+CREATE TABLE ca_booking (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  student_id BIGINT NOT NULL,
+  venue_id BIGINT NOT NULL,
+  booking_date DATE NOT NULL,
+  time_range VARCHAR(64) NOT NULL,
+  reason VARCHAR(255) NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  audit_user_id BIGINT,
+  audit_remark VARCHAR(255),
+  deleted TINYINT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_booking_unique (student_id, venue_id, booking_date, time_range, status)
+);
+
+DROP TABLE IF EXISTS ca_venue_slot;
+CREATE TABLE ca_venue_slot (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  venue_id BIGINT NOT NULL,
+  slot_date DATE NOT NULL,
+  time_range VARCHAR(64) NOT NULL,
+  total_quota INT NOT NULL,
+  remaining_quota INT NOT NULL,
+  status TINYINT NOT NULL DEFAULT 1,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_venue_slot (venue_id, slot_date, time_range, deleted)
+);
+
+DROP TABLE IF EXISTS ca_activity;
+CREATE TABLE ca_activity (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  title VARCHAR(128) NOT NULL,
+  venue_id BIGINT,
+  location VARCHAR(128),
+  content TEXT,
+  capacity INT NOT NULL DEFAULT 0,
+  enrolled_count INT NOT NULL DEFAULT 0,
+  publisher_id BIGINT,
+  scope_type VARCHAR(32) NOT NULL DEFAULT 'SCHOOL',
+  scope_college VARCHAR(64),
+  start_time DATETIME,
+  end_time DATETIME,
+  checkin_start_time DATETIME,
+  checkin_end_time DATETIME,
+  status TINYINT NOT NULL DEFAULT 1,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+DROP TABLE IF EXISTS ca_activity_enroll;
+CREATE TABLE ca_activity_enroll (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  activity_id BIGINT NOT NULL,
+  student_id BIGINT NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_enroll_unique (activity_id, student_id, status)
+);
+
+DROP TABLE IF EXISTS ca_checkin;
+CREATE TABLE ca_checkin (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  activity_id BIGINT NOT NULL,
+  student_id BIGINT NOT NULL,
+  checkin_time DATETIME NOT NULL,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_checkin_activity_student (activity_id, student_id, deleted)
+);
+
+DROP TABLE IF EXISTS ca_operation_log;
+CREATE TABLE ca_operation_log (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  operator_id BIGINT,
+  operation VARCHAR(64) NOT NULL,
+  biz_type VARCHAR(64),
+  biz_id BIGINT,
+  detail VARCHAR(512),
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+DROP TABLE IF EXISTS ca_notification;
+CREATE TABLE ca_notification (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  receiver_id BIGINT NOT NULL,
+  title VARCHAR(128) NOT NULL,
+  content VARCHAR(512) NOT NULL,
+  biz_type VARCHAR(64),
+  biz_id BIGINT,
+  read_status TINYINT NOT NULL DEFAULT 0,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_notification_receiver (receiver_id, read_status, create_time)
+);

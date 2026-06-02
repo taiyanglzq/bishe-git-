@@ -1,0 +1,5 @@
+import request from '../utils/request'
+
+export function getPersonalRecommendation() {
+  return request.get('/recommendation/personal')
+}

@@ -1,0 +1,21 @@
+import request from '../utils/request'
+
+export function getNoticePage(params) {
+  return request.get('/notice/page', { params })
+}
+
+export function getNoticeManagePage(params) {
+  return request.get('/notice/manage/page', { params })
+}
+
+export function createNotice(data) {
+  return request.post('/notice', data)
+}
+
+export function updateNotice(data) {
+  return request.put('/notice', data)
+}
+
+export function deleteNotice(id) {
+  return request.delete(`/notice/${id}`)
+}

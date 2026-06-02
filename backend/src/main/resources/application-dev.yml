@@ -1,0 +1,77 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: campus-assistant
+  main:
+    allow-bean-definition-overriding: true
+    allow-circular-references: true
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/campus_assistant?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: 200424
+  data:
+    redis:
+      database: 1
+      host: localhost
+      port: 6379
+      password: 2004lzqlzq
+  jackson:
+    default-property-inclusion: non_null
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+    generator:
+      WRITE_NUMBERS_AS_STRINGS: true
+  kafka:
+    bootstrap-servers: 192.168.211.20:9092
+    producer:
+      retries: 1
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: campus_assistant_group
+      enable-auto-commit: true
+      auto-commit-interval: 200
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    prefix:
+      distinction:
+        name: ca
+
+mybatis-plus:
+  mapper-locations: classpath:/mapper/**/*.xml
+  type-aliases-package: com.campus.assistant.entity
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    local-cache-scope: statement
+
+jwt:
+  secret: campus-assistant-secret-key-must-be-long-enough-for-hmac
+  expire-hours: 24
+
+logging:
+  level:
+    com.campus.assistant: info
+    AUDIT: INFO
+  pattern:
+    dateformat: mm:ss.SSS
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "prometheus,health,info"
+  prometheus:
+    metrics:
+      export:
+        enabled: true
