@@ -10,6 +10,8 @@ backend/target/
 backend/CheckBCrypt.java
 backend/CheckBCrypt.class
 backend/cp.txt
+backend/uploads/
+uploads/
 
 # Node
 frontend/node_modules/

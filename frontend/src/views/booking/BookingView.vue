@@ -5,9 +5,7 @@
       <p>选择场地、日期和时间段，提交预约申请</p>
     </div>
 
-    <!-- 预约工作台 -->
     <div class="booking-workbench">
-      <!-- 场地选择 -->
       <div class="booking-column">
         <div class="booking-column-header">
           <h3>选择场地</h3>
@@ -17,29 +15,25 @@
           <button
             v-for="venue in venues"
             :key="venue.id"
-            class="venue-select-item"
+            class="venue-select-item venue-select-item-rich"
             :class="{ active: Number(form.venueId) === venue.id }"
             @click="selectVenue(venue)"
           >
+            <img v-if="venue.imageUrl" :src="assetUrl(venue.imageUrl)" class="venue-select-image" alt="场地图片" />
+            <div v-else class="venue-select-image venue-select-image-empty">场地</div>
             <span>
               <span class="venue-select-item-name">{{ venue.name }}</span>
-              <span class="venue-select-item-location">{{ venue.location }}</span>
+              <span class="venue-select-item-location">{{ venue.location || '未设置位置' }}</span>
             </span>
             <span class="venue-select-item-capacity">{{ venue.capacity }} 人</span>
           </button>
         </div>
       </div>
 
-      <!-- 时间段选择 -->
       <div class="booking-column">
         <div class="booking-column-header">
           <h3>日期与时间段</h3>
-          <el-date-picker
-            v-model="selectedDate"
-            value-format="YYYY-MM-DD"
-            size="small"
-            @change="loadSlots"
-          />
+          <el-date-picker v-model="selectedDate" value-format="YYYY-MM-DD" size="small" @change="loadSlots" />
         </div>
 
         <div v-if="slots.length" class="slot-grid">
@@ -47,10 +41,7 @@
             v-for="slot in slots"
             :key="slot.id"
             class="slot-pill"
-            :class="{
-              active: form.timeRange === slot.timeRange,
-              disabled: slot.remainingQuota <= 0
-            }"
+            :class="{ active: form.timeRange === slot.timeRange, disabled: slot.remainingQuota <= 0 }"
             :disabled="slot.remainingQuota <= 0"
             @click="selectSlot(slot)"
           >
@@ -67,7 +58,6 @@
       </div>
     </div>
 
-    <!-- 预约记录 -->
     <div class="panel-card">
       <div class="panel-card-header">
         <h3>{{ canAudit ? '预约审核列表' : '我的预约记录' }}</h3>
@@ -82,7 +72,7 @@
         </div>
       </div>
       <div class="panel-card-body" style="padding: 0;">
-        <el-table :data="rows" border style="border: none;">
+        <el-table :data="rows" border style="border: none;" empty-text="暂无预约记录">
           <el-table-column prop="id" label="ID" width="70" />
           <el-table-column prop="studentId" label="学生ID" width="90" />
           <el-table-column prop="venueId" label="场地ID" width="90" />
@@ -90,10 +80,7 @@
           <el-table-column prop="timeRange" label="时间段" width="130" />
           <el-table-column prop="status" label="状态" width="100">
             <template #default="{ row }">
-              <el-tag
-                size="small"
-                :type="row.status === 'APPROVED' ? 'success' : row.status === 'REJECTED' ? 'danger' : row.status === 'CANCELLED' ? 'info' : 'warning'"
-              >
+              <el-tag size="small" :type="row.status === 'APPROVED' ? 'success' : row.status === 'REJECTED' ? 'danger' : row.status === 'CANCELLED' ? 'info' : 'warning'">
                 {{ statusLabel(row.status) }}
               </el-tag>
             </template>
@@ -114,7 +101,7 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { approveBooking, cancelBooking, createBooking, getBookingPage, rejectBooking } from '../../api/booking'
 import { useAuthStore } from '../../stores/auth'
 import { getVenuePage, getVenueSlotPage } from '../../api/venue'
@@ -128,16 +115,17 @@ const authStore = useAuthStore()
 const canAudit = computed(() => ['TEACHER', 'ADMIN'].includes(authStore.user?.roleCode))
 const canSubmit = computed(() => form.venueId && selectedDate.value && form.timeRange && form.reason)
 
-const form = reactive({
-  venueId: '',
-  bookingDate: '2026-06-10',
-  timeRange: '',
-  reason: '学习自习'
-})
+const form = reactive({ venueId: '', bookingDate: '2026-06-10', timeRange: '', reason: '学习自习' })
 
-function statusLabel(s) {
+function assetUrl(url) {
+  if (!url) return ''
+  if (/^https?:\/\//.test(url)) return url
+  return url
+}
+
+function statusLabel(statusValue) {
   const map = { PENDING: '待审核', APPROVED: '已通过', REJECTED: '已驳回', CANCELLED: '已取消' }
-  return map[s] || s
+  return map[statusValue] || statusValue
 }
 
 async function loadVenues() {
@@ -151,12 +139,12 @@ async function loadSlots() {
   if (!form.venueId || !selectedDate.value) { slots.value = []; return }
   const data = await getVenueSlotPage({ current: 1, size: 50, venueId: Number(form.venueId), slotDate: selectedDate.value })
   slots.value = data.records || []
-  if (!slots.value.some(s => s.timeRange === form.timeRange)) form.timeRange = ''
+  if (!slots.value.some((slot) => slot.timeRange === form.timeRange)) form.timeRange = ''
 }
 
 async function loadBookings() {
-  const d = await getBookingPage({ current: 1, size: 10, status: status.value || undefined })
-  rows.value = d.records || []
+  const data = await getBookingPage({ current: 1, size: 10, status: status.value || undefined })
+  rows.value = data.records || []
 }
 
 async function load() {
@@ -175,8 +163,26 @@ async function submit() {
 }
 
 async function approve(id) { await approveBooking({ bookingId: id, remark: '审核通过' }); ElMessage.success('已通过预约'); await loadBookings() }
-async function reject(id) { await rejectBooking({ bookingId: id, remark: '名额或时间不符合要求' }); ElMessage.success('已驳回预约'); await loadBookings() }
-async function cancel(id) { await cancelBooking(id); ElMessage.success('已取消预约'); await Promise.all([loadSlots(), loadBookings()]) }
+
+async function reject(id) {
+  const ok = await ElMessageBox.confirm('确定驳回该预约申请吗？', '驳回确认', {
+    type: 'warning', confirmButtonText: '确定驳回', cancelButtonText: '取消'
+  }).then(() => true).catch(() => false)
+  if (!ok) return
+  await rejectBooking({ bookingId: id, remark: '名额或时间不符合要求' })
+  ElMessage.success('已驳回预约')
+  await loadBookings()
+}
+
+async function cancel(id) {
+  const ok = await ElMessageBox.confirm('确定取消该预约吗？取消后名额将释放。', '取消确认', {
+    type: 'warning', confirmButtonText: '确定取消', cancelButtonText: '再想想'
+  }).then(() => true).catch(() => false)
+  if (!ok) return
+  await cancelBooking(id)
+  ElMessage.success('已取消预约')
+  await Promise.all([loadSlots(), loadBookings()])
+}
 
 onMounted(load)
 </script>

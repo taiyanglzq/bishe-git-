@@ -16,6 +16,7 @@ public class Activity {
     private String title;
     private Long venueId;
     private String location;
+    private String coverUrl;
     private String content;
     private Integer capacity;
     private Integer enrolledCount;

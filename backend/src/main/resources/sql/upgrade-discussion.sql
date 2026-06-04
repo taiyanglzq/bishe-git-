@@ -1,0 +1,63 @@
+USE campus_assistant;
+
+CREATE TABLE IF NOT EXISTS ca_discussion_post (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  author_id BIGINT NOT NULL,
+  college VARCHAR(64),
+  title VARCHAR(100) NOT NULL,
+  content TEXT NOT NULL,
+  image_url VARCHAR(255),
+  pinned TINYINT NOT NULL DEFAULT 0,
+  featured TINYINT NOT NULL DEFAULT 0,
+  like_count BIGINT NOT NULL DEFAULT 0,
+  comment_count BIGINT NOT NULL DEFAULT 0,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_discussion_post_sort (pinned, featured, create_time),
+  KEY idx_discussion_post_college (college)
+);
+
+
+CREATE TABLE IF NOT EXISTS ca_discussion_comment (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  post_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  content VARCHAR(500) NOT NULL,
+  like_count BIGINT NOT NULL DEFAULT 0,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_discussion_comment_post (post_id, create_time)
+);
+
+CREATE TABLE IF NOT EXISTS ca_discussion_like (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  post_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_discussion_like (post_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS ca_discussion_comment_like (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  comment_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_discussion_comment_like (comment_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS ca_discussion_user_ban (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id BIGINT NOT NULL,
+  operator_id BIGINT,
+  reason VARCHAR(255),
+  status TINYINT NOT NULL DEFAULT 1,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_discussion_user_ban (user_id)
+);

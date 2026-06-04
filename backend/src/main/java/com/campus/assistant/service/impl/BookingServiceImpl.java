@@ -86,7 +86,7 @@ public class BookingServiceImpl implements BookingService {
                 .in(Booking::getStatus, "PENDING", "APPROVED")
                 .eq(Booking::getDeleted, 0));
         if (duplicated > 0) {
-            throw new BusinessException(409, "同一学生不能重复预约同一场地的同一时间段");
+            throw new BusinessException(409, "不能重复预约同一场地的同一时间段哦！");
         }
         slot.setRemainingQuota(slot.getRemainingQuota() - 1);
         slot.setUpdateTime(LocalDateTime.now());

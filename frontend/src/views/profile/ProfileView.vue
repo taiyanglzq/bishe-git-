@@ -45,8 +45,8 @@
           <h3>修改密码</h3>
         </div>
         <div class="panel-card-body">
-          <el-form :model="form" label-position="top" style="max-width: 400px;">
-            <el-form-item label="旧密码">
+          <el-form ref="formRef" :model="form" :rules="rules" label-position="top" style="max-width: 400px;">
+            <el-form-item label="旧密码" prop="oldPassword">
               <el-input
                 v-model="form.oldPassword"
                 type="password"
@@ -55,16 +55,25 @@
                 :prefix-icon="Lock"
               />
             </el-form-item>
-            <el-form-item label="新密码">
+            <el-form-item label="新密码" prop="newPassword">
               <el-input
                 v-model="form.newPassword"
                 type="password"
                 show-password
-                placeholder="请输入新密码"
+                placeholder="请输入新密码（至少 6 位）"
                 :prefix-icon="Lock"
               />
             </el-form-item>
-            <el-button type="primary" @click="submit">
+            <el-form-item label="确认新密码" prop="confirmPassword">
+              <el-input
+                v-model="form.confirmPassword"
+                type="password"
+                show-password
+                placeholder="再次输入新密码"
+                :prefix-icon="Lock"
+              />
+            </el-form-item>
+            <el-button type="primary" :loading="loading" @click="submit">
               <el-icon><Check /></el-icon> 保存新密码
             </el-button>
           </el-form>
@@ -75,14 +84,34 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Check, Lock } from '@element-plus/icons-vue'
 import { updatePassword } from '../../api/auth'
 import { useAuthStore } from '../../stores/auth'
 
 const authStore = useAuthStore()
-const form = reactive({ oldPassword: '', newPassword: '' })
+const formRef = ref(null)
+const loading = ref(false)
+const form = reactive({ oldPassword: '', newPassword: '', confirmPassword: '' })
+
+const rules = {
+  oldPassword: [{ required: true, message: '请输入旧密码', trigger: 'blur' }],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, message: '新密码长度至少 6 位', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请再次输入新密码', trigger: 'blur' },
+    {
+      validator: (rule, value, callback) => {
+        if (value !== form.newPassword) callback(new Error('两次输入的密码不一致'))
+        else callback()
+      },
+      trigger: 'blur'
+    }
+  ]
+}
 
 const userInitial = computed(() => {
   const name = authStore.user?.realName || authStore.user?.username || 'U'
@@ -101,11 +130,21 @@ const roleTagType = computed(() => {
 })
 
 async function submit() {
-  await updatePassword(form)
-  ElMessage.success('密码修改成功，请牢记新密码')
-  form.oldPassword = ''
-  form.newPassword = ''
-  await authStore.fetchCurrentUser()
+  if (!formRef.value) return
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+  loading.value = true
+  try {
+    await updatePassword({ oldPassword: form.oldPassword, newPassword: form.newPassword })
+    ElMessage.success('密码修改成功，请牢记新密码')
+    form.oldPassword = ''
+    form.newPassword = ''
+    form.confirmPassword = ''
+    formRef.value.clearValidate()
+    await authStore.fetchCurrentUser()
+  } finally {
+    loading.value = false
+  }
 }
 
 onMounted(() => {

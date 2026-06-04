@@ -37,6 +37,7 @@ public class VenueController {
         Venue venue = new Venue();
         venue.setName(dto.getName());
         venue.setLocation(dto.getLocation());
+        venue.setImageUrl(dto.getImageUrl());
         venue.setCapacity(dto.getCapacity());
         venue.setStatus(dto.getStatus() == null ? 1 : dto.getStatus());
         venue.setDeleted(0);
@@ -62,6 +63,7 @@ public class VenueController {
         }
         venue.setName(dto.getName());
         venue.setLocation(dto.getLocation());
+        venue.setImageUrl(dto.getImageUrl());
         venue.setCapacity(dto.getCapacity());
         venue.setStatus(dto.getStatus() == null ? venue.getStatus() : dto.getStatus());
         venue.setUpdateTime(LocalDateTime.now());

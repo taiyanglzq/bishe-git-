@@ -34,11 +34,25 @@ CREATE TABLE ca_notice (
   update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+DROP TABLE IF EXISTS ca_notice_comment;
+CREATE TABLE ca_notice_comment (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  notice_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  content VARCHAR(500) NOT NULL,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_notice_comment_notice (notice_id, create_time),
+  KEY idx_notice_comment_user (user_id)
+);
+
 DROP TABLE IF EXISTS ca_venue;
 CREATE TABLE ca_venue (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(128) NOT NULL,
   location VARCHAR(128),
+  image_url VARCHAR(255),
   capacity INT NOT NULL DEFAULT 1,
   status TINYINT NOT NULL DEFAULT 1,
   deleted TINYINT NOT NULL DEFAULT 0,
@@ -84,6 +98,7 @@ CREATE TABLE ca_activity (
   title VARCHAR(128) NOT NULL,
   venue_id BIGINT,
   location VARCHAR(128),
+  cover_url VARCHAR(255),
   content TEXT,
   capacity INT NOT NULL DEFAULT 0,
   enrolled_count INT NOT NULL DEFAULT 0,
@@ -148,4 +163,70 @@ CREATE TABLE ca_notification (
   create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   KEY idx_notification_receiver (receiver_id, read_status, create_time)
+);
+
+DROP TABLE IF EXISTS ca_discussion_post;
+CREATE TABLE ca_discussion_post (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  author_id BIGINT NOT NULL,
+  college VARCHAR(64),
+  title VARCHAR(100) NOT NULL,
+  content TEXT NOT NULL,
+  image_url VARCHAR(255),
+  pinned TINYINT NOT NULL DEFAULT 0,
+  featured TINYINT NOT NULL DEFAULT 0,
+  like_count BIGINT NOT NULL DEFAULT 0,
+  comment_count BIGINT NOT NULL DEFAULT 0,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_discussion_post_sort (pinned, featured, create_time),
+  KEY idx_discussion_post_college (college)
+);
+
+DROP TABLE IF EXISTS ca_discussion_comment;
+CREATE TABLE ca_discussion_comment (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  post_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  content VARCHAR(500) NOT NULL,
+  like_count BIGINT NOT NULL DEFAULT 0,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_discussion_comment_post (post_id, create_time)
+);
+
+DROP TABLE IF EXISTS ca_discussion_like;
+CREATE TABLE ca_discussion_like (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  post_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_discussion_like (post_id, user_id)
+);
+
+DROP TABLE IF EXISTS ca_discussion_comment_like;
+CREATE TABLE ca_discussion_comment_like (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  comment_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_discussion_comment_like (comment_id, user_id)
+);
+
+DROP TABLE IF EXISTS ca_discussion_user_ban;
+CREATE TABLE ca_discussion_user_ban (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id BIGINT NOT NULL,
+  operator_id BIGINT,
+  reason VARCHAR(255),
+  status TINYINT NOT NULL DEFAULT 1,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_discussion_user_ban (user_id)
 );

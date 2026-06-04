@@ -13,6 +13,7 @@ public class VenueSaveDTO {
     private String name;
 
     private String location;
+    private String imageUrl;
 
     @NotNull(message = "容量不能为空")
     private Integer capacity;

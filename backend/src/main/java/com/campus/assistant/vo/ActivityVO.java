@@ -14,6 +14,7 @@ public class ActivityVO {
     private String title;
     private Long venueId;
     private String location;
+    private String coverUrl;
     private String content;
     private Integer capacity;
     private Integer enrolledCount;
@@ -31,6 +32,7 @@ public class ActivityVO {
                 .title(activity.getTitle())
                 .venueId(activity.getVenueId())
                 .location(activity.getLocation())
+                .coverUrl(activity.getCoverUrl())
                 .content(activity.getContent())
                 .capacity(activity.getCapacity())
                 .enrolledCount(activity.getEnrolledCount())

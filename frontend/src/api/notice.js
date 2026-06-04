@@ -4,6 +4,14 @@ export function getNoticePage(params) {
   return request.get('/notice/page', { params })
 }
 
+export function getNoticeDetail(id) {
+  return request.get(`/notice/${id}`)
+}
+
+export function createNoticeComment(data) {
+  return request.post('/notice/comment', data)
+}
+
 export function getNoticeManagePage(params) {
   return request.get('/notice/manage/page', { params })
 }

@@ -24,16 +24,17 @@
         <h2>账号登录</h2>
         <p class="login-form-hint">学生账号默认为学号，初始密码为身份证后 6 位</p>
 
-        <el-form :model="form" label-position="top" @keyup.enter="submit">
-          <el-form-item label="账号">
+        <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @keyup.enter="submit">
+          <el-form-item label="账号" prop="username">
             <el-input
               v-model="form.username"
               placeholder="例如 23050539414"
               size="large"
+              clearable
               :prefix-icon="User"
             />
           </el-form-item>
-          <el-form-item label="密码">
+          <el-form-item label="密码" prop="password">
             <el-input
               v-model="form.password"
               type="password"
@@ -43,6 +44,9 @@
               :prefix-icon="Lock"
             />
           </el-form-item>
+          <div class="login-form-options">
+            <el-checkbox v-model="rememberAccount">记住账号</el-checkbox>
+          </div>
           <el-button
             type="primary"
             size="large"
@@ -50,7 +54,7 @@
             class="login-submit-btn"
             @click="submit"
           >
-            登录系统
+            {{ loading ? '登录中…' : '登录系统' }}
           </el-button>
         </el-form>
       </div>
@@ -59,7 +63,7 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock, Calendar, Star, MagicStick } from '@element-plus/icons-vue'
@@ -68,19 +72,40 @@ import { useAuthStore } from '../../stores/auth'
 const router = useRouter()
 const authStore = useAuthStore()
 const loading = ref(false)
+const formRef = ref(null)
+const rememberAccount = ref(false)
+
+const REMEMBER_KEY = 'campus_remembered_account'
+
 const form = reactive({
-  username: '23050539414',
-  password: '123456'
+  username: '',
+  password: ''
 })
 
+const rules = {
+  username: [
+    { required: true, message: '请输入账号', trigger: 'blur' },
+    { min: 3, message: '账号长度至少 3 位', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, message: '密码长度至少 6 位', trigger: 'blur' }
+  ]
+}
+
 async function submit() {
-  if (!form.username || !form.password) {
-    ElMessage.warning('请输入账号和密码')
-    return
-  }
+  if (!formRef.value) return
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+
   loading.value = true
   try {
     const user = await authStore.login(form)
+    if (rememberAccount.value) {
+      localStorage.setItem(REMEMBER_KEY, form.username)
+    } else {
+      localStorage.removeItem(REMEMBER_KEY)
+    }
     if (user.initialPassword) {
       ElMessage.warning('当前仍为初始密码，建议登录后尽快修改')
     }
@@ -89,4 +114,15 @@ async function submit() {
     loading.value = false
   }
 }
+
+onMounted(() => {
+  const remembered = localStorage.getItem(REMEMBER_KEY)
+  if (remembered) {
+    form.username = remembered
+    rememberAccount.value = true
+  } else {
+    form.username = '23050539414'
+  }
+  form.password = '123456'
+})
 </script>

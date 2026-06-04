@@ -18,6 +18,7 @@ public class ActivitySaveDTO {
     private Long venueId;
 
     private String location;
+    private String coverUrl;
     private String content;
 
     @NotNull(message = "活动容量不能为空")

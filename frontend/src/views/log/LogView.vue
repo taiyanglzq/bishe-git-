@@ -13,13 +13,13 @@
         <el-option label="公告" value="NOTICE" />
         <el-option label="系统" value="SYSTEM" />
       </el-select>
-      <el-button @click="load">刷新</el-button>
-      <span style="margin-left: auto; font-size: 12px; color: var(--text-muted);">共 {{ rows.length }} 条记录</span>
+      <el-button @click="reload">刷新</el-button>
+      <span style="margin-left: auto; font-size: 12px; color: var(--text-muted);">共 {{ page.total }} 条记录</span>
     </div>
 
     <div class="panel-card">
       <div class="panel-card-body" style="padding: 0;">
-        <el-table :data="rows" border style="border: none;">
+        <el-table :data="rows" border style="border: none;" empty-text="暂无日志记录">
           <el-table-column prop="id" label="ID" width="70" />
           <el-table-column prop="operatorId" label="操作人" width="100" />
           <el-table-column prop="operation" label="操作" width="160">
@@ -41,19 +41,30 @@
           <el-table-column prop="detail" label="详情" min-width="240" show-overflow-tooltip />
           <el-table-column prop="createTime" label="时间" width="170" />
         </el-table>
+        <el-pagination
+          class="mgmt-pagination"
+          layout="prev, pager, next, total, sizes"
+          :current-page="page.current"
+          :page-size="page.size"
+          :page-sizes="[10, 20, 50]"
+          :total="page.total"
+          @current-change="changePage"
+          @size-change="changeSize"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { getLogPage } from '../../api/log'
 
 const rows = ref([])
 const keyword = ref('')
 const bizType = ref('')
+const page = reactive({ current: 1, size: 20, total: 0 })
 
 function operationType(op) {
   if (!op) return 'info'
@@ -70,8 +81,25 @@ function bizTypeLabel(t) {
 }
 
 async function load() {
-  const data = await getLogPage({ current: 1, size: 50 })
+  const data = await getLogPage({ current: page.current, size: page.size })
   rows.value = data.records || []
+  page.total = data.total || 0
+}
+
+function reload() {
+  page.current = 1
+  load()
+}
+
+function changePage(p) {
+  page.current = p
+  load()
+}
+
+function changeSize(s) {
+  page.size = s
+  page.current = 1
+  load()
 }
 
 onMounted(load)

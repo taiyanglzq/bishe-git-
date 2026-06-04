@@ -1,6 +1,5 @@
 <template>
   <div class="app-shell">
-    <!-- 侧边栏 -->
     <aside class="sidebar" :class="{ collapsed: sidebarCollapsed }">
       <div class="sidebar-brand">
         <div class="sidebar-brand-icon">CA</div>
@@ -39,9 +38,7 @@
       </nav>
     </aside>
 
-    <!-- 主面板 -->
     <main class="main-panel" :class="{ expanded: sidebarCollapsed }">
-      <!-- 顶栏 -->
       <header class="topbar">
         <div class="topbar-left">
           <button class="topbar-collapse-btn" @click="sidebarCollapsed = !sidebarCollapsed">
@@ -82,7 +79,6 @@
         </div>
       </header>
 
-      <!-- 内容区 -->
       <section class="content-area">
         <RouterView v-slot="{ Component }">
           <transition name="fade-slide" mode="out-in">
@@ -112,16 +108,8 @@ const sidebarCollapsed = ref(false)
 const unreadCount = ref(0)
 
 const currentTitle = computed(() => route.meta.title || '智慧校园助手')
-
-const roleName = computed(() => {
-  const map = { ADMIN: '管理员', TEACHER: '教师', STUDENT: '学生' }
-  return map[authStore.user?.roleCode] || '学生'
-})
-
-const userInitial = computed(() => {
-  const name = authStore.user?.realName || authStore.user?.username || 'U'
-  return name.charAt(0).toUpperCase()
-})
+const roleName = computed(() => ({ ADMIN: '管理员', TEACHER: '教师', STUDENT: '学生' }[authStore.user?.roleCode] || '学生'))
+const userInitial = computed(() => (authStore.user?.realName || authStore.user?.username || 'U').charAt(0).toUpperCase())
 
 const allMenus = [
   { path: '/dashboard', title: '首页工作台', icon: DataBoard, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
@@ -129,6 +117,7 @@ const allMenus = [
   { path: '/venue', title: '场地资源', icon: OfficeBuilding, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
   { path: '/booking', title: '场地预约', icon: Calendar, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
   { path: '/activity', title: '活动签到', icon: Star, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
+  { path: '/discussion', title: '讨论交流', icon: Tickets, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
   { path: '/recommendation', title: '个性化推荐', icon: MagicStick, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
   { path: '/notification', title: '通知中心', icon: Bell, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
   { path: '/log', title: '日志审计', icon: Document, roles: ['ADMIN'], group: 'admin' },
@@ -137,11 +126,10 @@ const allMenus = [
 
 const visibleMenus = computed(() => {
   const role = authStore.user?.roleCode || 'STUDENT'
-  return allMenus.filter(m => m.roles.includes(role))
+  return allMenus.filter((item) => item.roles.includes(role))
 })
-
-const mainMenus = computed(() => visibleMenus.value.filter(m => m.group === 'main'))
-const adminMenus = computed(() => visibleMenus.value.filter(m => m.group === 'admin'))
+const mainMenus = computed(() => visibleMenus.value.filter((item) => item.group === 'main'))
+const adminMenus = computed(() => visibleMenus.value.filter((item) => item.group === 'admin'))
 
 function handleUserCommand(cmd) {
   if (cmd === 'profile') router.push('/profile')

@@ -15,6 +15,7 @@ public class Venue {
     private Long id;
     private String name;
     private String location;
+    private String imageUrl;
     private Integer capacity;
     private Integer status;
     private Integer deleted;

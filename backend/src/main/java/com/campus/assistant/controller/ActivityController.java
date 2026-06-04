@@ -1,12 +1,13 @@
 package com.campus.assistant.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.assistant.common.exception.BusinessException;
 import com.campus.assistant.common.result.Result;
 import com.campus.assistant.common.utils.RoleUtils;
 import com.campus.assistant.common.utils.UserContext;
-import com.campus.assistant.dto.ActivitySaveDTO;
 import com.campus.assistant.dto.ActivityEnrollDTO;
+import com.campus.assistant.dto.ActivitySaveDTO;
 import com.campus.assistant.entity.Activity;
 import com.campus.assistant.entity.Venue;
 import com.campus.assistant.mapper.ActivityMapper;
@@ -16,7 +17,15 @@ import com.campus.assistant.vo.ActivityRecordVO;
 import com.campus.assistant.vo.ActivityVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 
@@ -63,7 +72,7 @@ public class ActivityController {
     public Result<Page<Activity>> managePage(@RequestParam(defaultValue = "1") Long current,
                                              @RequestParam(defaultValue = "10") Long size) {
         RoleUtils.requireAny("TEACHER", "ADMIN");
-        com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<Activity> wrapper = new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<Activity>()
+        LambdaQueryWrapper<Activity> wrapper = new LambdaQueryWrapper<Activity>()
                 .eq(Activity::getDeleted, 0);
         if (RoleUtils.hasAny("TEACHER")) {
             wrapper.eq(Activity::getPublisherId, UserContext.getUserId());
@@ -75,24 +84,13 @@ public class ActivityController {
     @PostMapping
     public Result<Long> save(@Valid @RequestBody ActivitySaveDTO dto) {
         RoleUtils.requireAny("TEACHER", "ADMIN");
-        Activity activity = new Activity();
         Venue venue = requireVenue(dto.getVenueId());
         validateActivityTime(dto);
         validateCapacity(dto, venue);
-        activity.setTitle(dto.getTitle());
-        activity.setVenueId(venue.getId());
-        activity.setLocation(venue.getName() + "（" + venue.getLocation() + "）");
-        activity.setContent(dto.getContent());
-        activity.setCapacity(dto.getCapacity());
+        Activity activity = new Activity();
+        fillActivity(activity, dto, venue);
         activity.setEnrolledCount(0);
         activity.setPublisherId(UserContext.getUserId());
-        activity.setScopeType(resolveScopeType(dto.getScopeType()));
-        activity.setScopeCollege(resolveScopeCollege(dto.getScopeCollege()));
-        activity.setStartTime(dto.getStartTime());
-        activity.setEndTime(dto.getEndTime());
-        activity.setCheckinStartTime(dto.getCheckinStartTime());
-        activity.setCheckinEndTime(dto.getCheckinEndTime());
-        activity.setStatus(dto.getStatus() == null ? 1 : dto.getStatus());
         activity.setDeleted(0);
         activity.setCreateTime(LocalDateTime.now());
         activity.setUpdateTime(LocalDateTime.now());
@@ -104,25 +102,14 @@ public class ActivityController {
     public Result<Void> update(@Valid @RequestBody ActivitySaveDTO dto) {
         RoleUtils.requireAny("TEACHER", "ADMIN");
         Activity activity = activityMapper.selectById(dto.getId());
-        if (activity == null) {
-            return Result.fail(404, "活动不存在");
+        if (activity == null || activity.getDeleted() == 1) {
+            throw new BusinessException(404, "活动不存在");
         }
         requireActivityOwner(activity);
         Venue venue = requireVenue(dto.getVenueId());
         validateActivityTime(dto);
         validateCapacity(dto, venue);
-        activity.setTitle(dto.getTitle());
-        activity.setVenueId(venue.getId());
-        activity.setLocation(venue.getName() + "（" + venue.getLocation() + "）");
-        activity.setContent(dto.getContent());
-        activity.setCapacity(dto.getCapacity());
-        activity.setScopeType(resolveScopeType(dto.getScopeType()));
-        activity.setScopeCollege(resolveScopeCollege(dto.getScopeCollege()));
-        activity.setStartTime(dto.getStartTime());
-        activity.setEndTime(dto.getEndTime());
-        activity.setCheckinStartTime(dto.getCheckinStartTime());
-        activity.setCheckinEndTime(dto.getCheckinEndTime());
-        activity.setStatus(dto.getStatus() == null ? activity.getStatus() : dto.getStatus());
+        fillActivity(activity, dto, venue);
         activity.setUpdateTime(LocalDateTime.now());
         activityMapper.updateById(activity);
         return Result.success();
@@ -141,6 +128,22 @@ public class ActivityController {
         return Result.success();
     }
 
+    private void fillActivity(Activity activity, ActivitySaveDTO dto, Venue venue) {
+        activity.setTitle(dto.getTitle());
+        activity.setVenueId(venue.getId());
+        activity.setLocation(venue.getName() + "（" + venue.getLocation() + "）");
+        activity.setCoverUrl(dto.getCoverUrl());
+        activity.setContent(dto.getContent());
+        activity.setCapacity(dto.getCapacity());
+        activity.setScopeType(resolveScopeType(dto.getScopeType()));
+        activity.setScopeCollege(resolveScopeCollege(dto.getScopeCollege()));
+        activity.setStartTime(dto.getStartTime());
+        activity.setEndTime(dto.getEndTime());
+        activity.setCheckinStartTime(dto.getCheckinStartTime());
+        activity.setCheckinEndTime(dto.getCheckinEndTime());
+        activity.setStatus(dto.getStatus() == null ? 1 : dto.getStatus());
+    }
+
     private void requireActivityOwner(Activity activity) {
         if (RoleUtils.hasAny("TEACHER") && !activity.getPublisherId().equals(UserContext.getUserId())) {
             throw new BusinessException(403, "教师只能管理自己发布的活动");
@@ -156,7 +159,7 @@ public class ActivityController {
     }
 
     private void validateCapacity(ActivitySaveDTO dto, Venue venue) {
-        if (dto.getCapacity() <= 0) {
+        if (dto.getCapacity() == null || dto.getCapacity() <= 0) {
             throw new BusinessException(400, "活动容量必须大于 0");
         }
         if (venue.getCapacity() != null && dto.getCapacity() > venue.getCapacity()) {
@@ -188,7 +191,7 @@ public class ActivityController {
 
     private String resolveScopeCollege(String scopeCollege) {
         String currentCollege = UserContext.get() == null ? null : UserContext.get().getCollege();
-        if (RoleUtils.hasAny("ADMIN") && "SCHOOL".equals(scopeCollege)) {
+        if (RoleUtils.hasAny("ADMIN") && (scopeCollege == null || scopeCollege.isBlank())) {
             return null;
         }
         String college = scopeCollege == null || scopeCollege.isBlank() ? currentCollege : scopeCollege;
