@@ -5,8 +5,9 @@ import com.campus.assistant.dto.ActivityEnrollDTO;
 import com.campus.assistant.dto.CheckinDTO;
 import com.campus.assistant.entity.Activity;
 import com.campus.assistant.vo.ActivityRecordVO;
-import com.campus.assistant.vo.ActivityVO;
-
+import com.campus.assistant.vo.ActivityVO;/**
+ * ?? ?????????????????????
+ */
 public interface ActivityBizService {
 
     Page<ActivityVO> page(Long current, Long size);

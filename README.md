@@ -29,9 +29,17 @@ backend/src/main/resources/sql/data.sql
 backend/src/main/resources/application-dev.yml
 ```
 
-3. 启动 Redis 和 Kafka。
+3. 如需启用 AI 能力，补充配置：
 
-4. 启动后端：
+```text
+backend/src/main/resources/application-dev.yml
+app.ai.enabled=true
+app.ai.api-key=你的 DeepSeek API Key
+```
+
+4. 启动 Redis 和 Kafka。
+
+5. 启动后端：
 
 ```bash
 cd backend
@@ -97,6 +105,25 @@ http://localhost:5173
 - 预约库存扣减与释放
 - 按角色显示前端菜单
 - 系统管理基础 CRUD
+- AI 客服助手后端接口
+- AI 内容审核员后端骨架
+- 讨论区发帖/评论 AI 审核接入
+
+## AI 功能说明
+
+当前项目已新增两个 AI 能力：
+
+1. `AI 客服助手`
+
+- 独立后端接口：`POST /ai/chat`
+- 可回答系统使用问题，如场地预约、活动报名、活动签到、公告通知、讨论交流
+- 可根据当前登录用户上下文回答部分个人业务问题，例如最近一条场地预约状态
+
+2. `AI 内容审核员`
+
+- 独立 AI 模块，接入讨论区发帖和评论流程
+- 支持 `PASS`、`FLAG`、`BLOCK` 三类审核结果
+- 未配置 AI Key 时，系统仍可通过本地敏感词规则完成基础审核兜底
 
 ## 数据库升级说明
 

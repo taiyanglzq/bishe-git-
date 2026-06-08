@@ -28,6 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * ???? ????????????????????
+ */
 @Service
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {

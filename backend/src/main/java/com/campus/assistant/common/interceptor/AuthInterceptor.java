@@ -11,6 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+/**
+ * ?? ???????????????????????
+ */
 @Component
 @RequiredArgsConstructor
 public class AuthInterceptor implements HandlerInterceptor {

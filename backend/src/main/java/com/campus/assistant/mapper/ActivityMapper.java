@@ -1,7 +1,8 @@
 package com.campus.assistant.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.campus.assistant.entity.Activity;
-
+import com.campus.assistant.entity.Activity;/**
+ * ?? Mapper????????????????
+ */
 public interface ActivityMapper extends BaseMapper<Activity> {
 }

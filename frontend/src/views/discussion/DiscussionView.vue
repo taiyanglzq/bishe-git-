@@ -1,3 +1,4 @@
+<!-- ???? ???????????????????????? -->
 <template>
   <div>
     <div class="page-header">
@@ -168,6 +169,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { previewModeration } from '../../api/ai'
 import { useAuthStore } from '../../stores/auth'
 import { uploadImage } from '../../api/venue'
 import {
@@ -227,6 +229,8 @@ function search() {
 }
 
 async function submitPost() {
+  const passed = await checkModerationPreview(`${postForm.title.trim()}\n${postForm.content.trim()}`, '帖子')
+  if (!passed) return
   await createDiscussionPost({
     title: postForm.title.trim(),
     content: postForm.content.trim(),
@@ -246,10 +250,36 @@ function resetPostForm() {
 async function submitComment(postId) {
   const content = detailComment.value.trim()
   if (!content) return
+  const passed = await checkModerationPreview(content, '评论')
+  if (!passed) return
   await createDiscussionComment({ postId, content })
   ElMessage.success('评论成功')
   detailComment.value = ''
   await load()
+}
+
+async function checkModerationPreview(content, scene) {
+  try {
+    const result = await previewModeration(content, scene)
+    if (result?.result === 'BLOCK') {
+      ElMessage.error(result.suggestion || `${scene}内容包含违规信息，请修改后再提交`)
+      return false
+    }
+    if (result?.result === 'FLAG') {
+      return await ElMessageBox.confirm(
+        result.suggestion || `${scene}内容疑似存在敏感或不文明表达，是否继续提交？`,
+        'AI 内容提醒',
+        {
+          type: 'warning',
+          confirmButtonText: '继续提交',
+          cancelButtonText: '返回修改'
+        }
+      ).then(() => true).catch(() => false)
+    }
+    return true
+  } catch (error) {
+    return true
+  }
 }
 
 async function like(post) {

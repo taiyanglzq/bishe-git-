@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.campus.assistant.entity.DiscussionUserBan;
 import org.apache.ibatis.annotations.Mapper;
 
+/**
+ * ????? Mapper???????????????????
+ */
 @Mapper
 public interface DiscussionUserBanMapper extends BaseMapper<DiscussionUserBan> {
 }

@@ -75,3 +75,13 @@ management:
     metrics:
       export:
         enabled: true
+
+app:
+  ai:
+    enabled: false
+    provider: deepseek
+    api-key:
+    base-url: https://api.deepseek.com
+    chat-model: deepseek-chat
+    moderation-enabled: true
+    assistant-enabled: true

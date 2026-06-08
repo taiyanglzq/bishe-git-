@@ -1,5 +1,9 @@
 package com.campus.assistant.controller;
 
+import com.campus.assistant.ai.dto.ModerationRequest;
+import com.campus.assistant.ai.dto.ModerationResponse;
+import com.campus.assistant.ai.enums.ModerationResult;
+import com.campus.assistant.ai.service.ContentModerationService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.assistant.common.exception.BusinessException;
@@ -40,6 +44,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * ???? ????????????????????????
+ */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/discussion")
@@ -51,6 +58,7 @@ public class DiscussionController {
     private final DiscussionLikeMapper likeMapper;
     private final DiscussionUserBanMapper banMapper;
     private final UserMapper userMapper;
+    private final ContentModerationService contentModerationService;
 
     @GetMapping("/page")
     public Result<Page<DiscussionPostVO>> page(@RequestParam(defaultValue = "1") Long current,
@@ -72,6 +80,14 @@ public class DiscussionController {
     public Result<Long> createPost(@Valid @RequestBody DiscussionPostCreateDTO dto) {
         User user = requireCurrentUser();
         ensureNotBanned(user.getId());
+        ModerationResponse moderation = contentModerationService.moderate(ModerationRequest.builder()
+                .content(dto.getTitle() + "\n" + dto.getContent())
+                .scene("帖子")
+                .userId(user.getId())
+                .build());
+        if (moderation.getResult() == ModerationResult.BLOCK) {
+            throw new BusinessException(400, moderation.getSuggestion().isBlank() ? "内容包含违规信息，发布失败" : moderation.getSuggestion());
+        }
         DiscussionPost post = new DiscussionPost();
         post.setAuthorId(user.getId());
         post.setCollege(user.getCollege());
@@ -94,6 +110,14 @@ public class DiscussionController {
     public Result<Long> comment(@Valid @RequestBody DiscussionCommentCreateDTO dto) {
         User user = requireCurrentUser();
         ensureNotBanned(user.getId());
+        ModerationResponse moderation = contentModerationService.moderate(ModerationRequest.builder()
+                .content(dto.getContent())
+                .scene("评论")
+                .userId(user.getId())
+                .build());
+        if (moderation.getResult() == ModerationResult.BLOCK) {
+            throw new BusinessException(400, moderation.getSuggestion().isBlank() ? "评论包含违规信息，发布失败" : moderation.getSuggestion());
+        }
         DiscussionPost post = requirePost(dto.getPostId());
         DiscussionComment comment = new DiscussionComment();
         comment.setPostId(post.getId());
