@@ -94,7 +94,7 @@
         </div>
       </el-tab-pane>
 
-      <el-tab-pane name="book">
+      <el-tab-pane v-if="isAdmin" name="book">
         <template #label><span class="tab-label"><el-icon><Collection /></el-icon> 图书管理</span></template>
         <div class="mgmt-form-row">
           <image-uploader label="封面图片" :url="bookForm.coverUrl" @uploaded="bookForm.coverUrl = $event" />

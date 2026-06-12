@@ -64,7 +64,7 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public Page<Book> managePage(Long current, Long size) {
-        RoleUtils.requireAny("TEACHER", "ADMIN");
+        RoleUtils.requireAny("ADMIN");
         LambdaQueryWrapper<Book> wrapper = new LambdaQueryWrapper<Book>()
                 .eq(Book::getDeleted, 0)
                 .orderByDesc(Book::getCreateTime);
@@ -73,7 +73,7 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public Long save(BookSaveDTO dto) {
-        RoleUtils.requireAny("TEACHER", "ADMIN");
+        RoleUtils.requireAny("ADMIN");
         Book book = new Book();
         book.setTitle(dto.getTitle());
         book.setAuthor(dto.getAuthor());
@@ -96,7 +96,7 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public void update(BookSaveDTO dto) {
-        RoleUtils.requireAny("TEACHER", "ADMIN");
+        RoleUtils.requireAny("ADMIN");
         Book book = bookMapper.selectById(dto.getId());
         if (book == null || book.getDeleted() == 1) {
             throw new BusinessException(404, "图书不存在");
