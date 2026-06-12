@@ -78,7 +78,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Bell, UserFilled, ChatDotRound, DataLine, Reading } from '@element-plus/icons-vue'
 import { getDashboardStats, getDashboardWorkbench } from '../../api/dashboard'
@@ -109,6 +109,8 @@ const metrics = computed(() => {
   ]
 })
 
+let refreshTimer = null
+
 function goTo(path) { router.push(path) }
 
 async function loadData() {
@@ -117,10 +119,18 @@ async function loadData() {
   workbench.value = w
 }
 
-onMounted(loadData)
+onMounted(() => {
+  loadData()
+  // 每30秒自动刷新，保证数据同步
+  refreshTimer = setInterval(loadData, 30000)
+})
 
 // 每次回到首页都重新加载数据
 watch(() => route.path, (path) => {
   if (path === '/dashboard') loadData()
+})
+
+onBeforeUnmount(() => {
+  if (refreshTimer) clearInterval(refreshTimer)
 })
 </script>
