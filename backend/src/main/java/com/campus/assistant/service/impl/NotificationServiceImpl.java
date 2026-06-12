@@ -112,6 +112,6 @@ public class NotificationServiceImpl implements NotificationService {
 
     private void evictNotificationCaches(Long userId) {
         cacheEvictService.evictNotificationCaches(userId);
-        cacheEvictService.evictDashboardCaches();
+        cacheEvictService.evictUserDashboardCaches(userId);
     }
 }

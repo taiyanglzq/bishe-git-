@@ -2,6 +2,8 @@ package com.campus.assistant.service.impl;
 
 import com.campus.assistant.common.cache.CacheClient;
 import com.campus.assistant.common.cache.CacheKeyConstants;
+import com.campus.assistant.common.utils.UserContext;
+import com.campus.assistant.entity.User;
 import com.campus.assistant.service.CacheEvictService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,19 @@ public class CacheEvictServiceImpl implements CacheEvictService {
     public void evictDashboardCaches() {
         cacheClient.delete(cacheClient.scan(CacheKeyConstants.DASHBOARD_STATS + "*"));
         cacheClient.delete(cacheClient.scan(CacheKeyConstants.DASHBOARD_WORKBENCH + "*"));
+    }
+
+    @Override
+    public void evictUserDashboardCaches(Long userId) {
+        if (userId == null) {
+            evictDashboardCaches();
+            return;
+        }
+        User user = UserContext.get();
+        if (user != null) {
+            cacheClient.delete(CacheKeyConstants.DASHBOARD_WORKBENCH + user.getRoleCode() + ":" + userId);
+            cacheClient.delete(CacheKeyConstants.DASHBOARD_STATS + user.getRoleCode());
+        }
     }
 
     @Override

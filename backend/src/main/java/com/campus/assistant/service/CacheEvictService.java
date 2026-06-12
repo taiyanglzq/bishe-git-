@@ -7,6 +7,8 @@ public interface CacheEvictService {
 
     void evictDashboardCaches();
 
+    void evictUserDashboardCaches(Long userId);
+
     void evictRecommendationCaches();
 
     void evictNoticePageCaches();
