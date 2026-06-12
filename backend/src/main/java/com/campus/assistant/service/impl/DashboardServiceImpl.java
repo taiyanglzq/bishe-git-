@@ -74,14 +74,17 @@ public class DashboardServiceImpl implements DashboardService {
         String roleCode = currentRoleCode();
         String cacheKey = CacheKeyConstants.DASHBOARD_WORKBENCH + roleCode + ":" + (userId == null ? 0L : userId);
         DashboardWorkbenchVO cached = cacheClient.get(cacheKey, DashboardWorkbenchVO.class);
-        if (cached != null) {
-            return cached;
-        }
 
+        // 未读数始终实时查询，不走缓存
         Long unreadNotificationCount = userId == null ? 0L : notificationMapper.selectCount(new LambdaQueryWrapper<Notification>()
                 .eq(Notification::getReceiverId, userId)
                 .eq(Notification::getReadStatus, 0)
                 .eq(Notification::getDeleted, 0));
+
+        if (cached != null) {
+            cached.setUnreadNotificationCount(unreadNotificationCount);
+            return cached;
+        }
 
         DashboardWorkbenchVO result = DashboardWorkbenchVO.builder()
                 .roleName(roleName(roleCode))
