@@ -236,8 +236,8 @@ function changeBookPage(p) { bookPage.current = p; loadBooks() }
 
 async function loadAll() {
   if (!isAdmin.value && activeTab.value === 'user') activeTab.value = 'notice'
-  const tasks = [loadNotices(), loadBooks()]
-  if (isAdmin.value) tasks.push(loadUsers())
+  const tasks = [loadNotices()]
+  if (isAdmin.value) tasks.push(loadUsers(), loadBooks())
   await Promise.all(tasks)
 }
 

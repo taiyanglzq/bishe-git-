@@ -21,6 +21,7 @@ import com.campus.assistant.mapper.NoticeMapper;
 import com.campus.assistant.mapper.UserMapper;
 import com.campus.assistant.service.CacheEvictService;
 import com.campus.assistant.service.NoticeService;
+import com.campus.assistant.service.NotificationService;
 import com.campus.assistant.vo.NoticeCommentVO;
 import com.campus.assistant.vo.NoticeDetailVO;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +52,7 @@ public class NoticeServiceImpl implements NoticeService {
     private final CacheClient cacheClient;
     private final CacheEvictService cacheEvictService;
     private final ContentModerationService contentModerationService;
+    private final NotificationService notificationService;
 
     @Override
     public Page<Notice> page(Long current, Long size) {
@@ -170,6 +172,11 @@ public class NoticeServiceImpl implements NoticeService {
         notice.setUpdateTime(LocalDateTime.now());
         noticeMapper.updateById(notice);
         evictNoticeRelatedCaches(id);
+        if (notice.getPublisherId() != null) {
+            notificationService.send(notice.getPublisherId(),
+                    "公告审核通过", "您发布的公告「" + notice.getTitle() + "」已通过审核，现已公开发布。",
+                    "NOTICE_APPROVED", id);
+        }
     }
 
     @Override
@@ -183,6 +190,11 @@ public class NoticeServiceImpl implements NoticeService {
         notice.setUpdateTime(LocalDateTime.now());
         noticeMapper.updateById(notice);
         evictNoticeRelatedCaches(id);
+        if (notice.getPublisherId() != null) {
+            notificationService.send(notice.getPublisherId(),
+                    "公告审核驳回", "您发布的公告「" + notice.getTitle() + "」未通过审核，请联系管理员确认原因。",
+                    "NOTICE_REJECTED", id);
+        }
     }
 
     @Override
