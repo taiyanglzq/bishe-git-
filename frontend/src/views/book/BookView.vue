@@ -35,7 +35,8 @@
         @click="openDetail(item.id)"
       >
         <div class="book-cover">
-          <div class="book-cover-placeholder">
+          <img v-if="item.coverUrl" :src="item.coverUrl" class="book-cover-img" :alt="item.title" />
+          <div v-else class="book-cover-placeholder">
             <el-icon><Reading /></el-icon>
           </div>
         </div>
@@ -112,7 +113,8 @@
     <el-dialog v-model="detailVisible" :title="currentBook?.title || '图书详情'" width="600px" destroy-on-close>
       <div v-if="currentBook" class="book-detail">
         <div class="book-detail-header">
-          <div class="book-cover-placeholder large">
+          <img v-if="currentBook.coverUrl" :src="currentBook.coverUrl" class="book-cover-img large" :alt="currentBook.title" />
+          <div v-else class="book-cover-placeholder large">
             <el-icon><Reading /></el-icon>
           </div>
           <div class="book-detail-meta">
@@ -329,6 +331,18 @@ onMounted(() => {
   border-color: var(--primary-color);
   box-shadow: 0 4px 16px rgba(0,0,0,0.06);
   transform: translateY(-2px);
+}
+
+.book-cover-img {
+  width: 80px;
+  height: 110px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.book-cover-img.large {
+  width: 100px;
+  height: 140px;
 }
 
 .book-cover-placeholder {
