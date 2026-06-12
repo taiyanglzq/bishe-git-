@@ -1,6 +1,7 @@
 package com.campus.assistant.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.assistant.common.exception.BusinessException;
 import com.campus.assistant.common.utils.RoleUtils;
@@ -135,7 +136,10 @@ public class ExamServiceImpl implements ExamService {
         RoleUtils.requireAny("ADMIN");
         Exam exam = examMapper.selectById(id);
         if (exam != null) {
-            examMapper.deleteById(id);
+            examMapper.update(null, new LambdaUpdateWrapper<Exam>()
+                    .eq(Exam::getId, id)
+                    .set(Exam::getDeleted, 1)
+                    .set(Exam::getUpdateTime, LocalDateTime.now()));
         }
     }
 

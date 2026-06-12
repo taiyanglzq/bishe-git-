@@ -1,6 +1,7 @@
 package com.campus.assistant.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.assistant.ai.dto.ModerationRequest;
 import com.campus.assistant.ai.dto.ModerationResponse;
@@ -222,7 +223,10 @@ public class NoticeServiceImpl implements NoticeService {
         Notice notice = noticeMapper.selectById(id);
         if (notice != null) {
             requireNoticeOwner(notice);
-            noticeMapper.deleteById(id);
+            noticeMapper.update(null, new LambdaUpdateWrapper<Notice>()
+                    .eq(Notice::getId, id)
+                    .set(Notice::getDeleted, 1)
+                    .set(Notice::getUpdateTime, LocalDateTime.now()));
             evictNoticeRelatedCaches(id);
         }
     }

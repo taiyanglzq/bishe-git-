@@ -1,6 +1,7 @@
 package com.campus.assistant.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.assistant.common.cache.CacheClient;
 import com.campus.assistant.common.exception.BusinessException;
@@ -183,7 +184,10 @@ public class KnowledgeServiceImpl implements KnowledgeService {
         RoleUtils.requireAny("ADMIN");
         KnowledgeEntry entry = knowledgeEntryMapper.selectById(id);
         if (entry != null) {
-            knowledgeEntryMapper.deleteById(id);
+            knowledgeEntryMapper.update(null, new LambdaUpdateWrapper<KnowledgeEntry>()
+                    .eq(KnowledgeEntry::getId, id)
+                    .set(KnowledgeEntry::getDeleted, 1)
+                    .set(KnowledgeEntry::getUpdateTime, LocalDateTime.now()));
             evictKnowledgeCache();
         }
     }

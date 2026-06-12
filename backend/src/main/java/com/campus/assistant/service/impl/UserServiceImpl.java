@@ -1,6 +1,7 @@
 package com.campus.assistant.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.assistant.common.exception.BusinessException;
 import com.campus.assistant.common.utils.RoleUtils;
@@ -95,7 +96,10 @@ public class UserServiceImpl implements UserService {
         RoleUtils.requireAny("ADMIN");
         User user = userMapper.selectById(id);
         if (user != null) {
-            userMapper.deleteById(id);
+            userMapper.update(null, new LambdaUpdateWrapper<User>()
+                    .eq(User::getId, id)
+                    .set(User::getDeleted, 1)
+                    .set(User::getUpdateTime, LocalDateTime.now()));
         }
     }
 

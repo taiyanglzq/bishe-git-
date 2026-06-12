@@ -1,6 +1,7 @@
 package com.campus.assistant.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.assistant.common.exception.BusinessException;
 import com.campus.assistant.common.utils.RoleUtils;
@@ -122,7 +123,10 @@ public class BookServiceImpl implements BookService {
         RoleUtils.requireAny("ADMIN");
         Book book = bookMapper.selectById(id);
         if (book != null) {
-            bookMapper.deleteById(id);
+            bookMapper.update(null, new LambdaUpdateWrapper<Book>()
+                    .eq(Book::getId, id)
+                    .set(Book::getDeleted, 1)
+                    .set(Book::getUpdateTime, LocalDateTime.now()));
         }
     }
 
