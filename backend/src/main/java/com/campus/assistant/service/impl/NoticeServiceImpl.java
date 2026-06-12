@@ -272,7 +272,11 @@ public class NoticeServiceImpl implements NoticeService {
     }
 
     private void requireNoticeOwner(Notice notice) {
-        if (RoleUtils.hasAny("TEACHER") && !notice.getPublisherId().equals(UserContext.getUserId())) {
+        if (RoleUtils.hasAny("ADMIN")) {
+            return;
+        }
+        Long publisherId = notice.getPublisherId();
+        if (publisherId == null || !publisherId.equals(UserContext.getUserId())) {
             throw new BusinessException(403, "教师只能管理自己发布的公告");
         }
     }
