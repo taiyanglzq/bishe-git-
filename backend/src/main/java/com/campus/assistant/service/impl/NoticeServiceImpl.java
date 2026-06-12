@@ -159,6 +159,19 @@ public class NoticeServiceImpl implements NoticeService {
         notice.setUpdateTime(LocalDateTime.now());
         noticeMapper.insert(notice);
         evictNoticeRelatedCaches(notice.getId());
+
+        // 发送通知给发布者
+        Long publisherId = notice.getPublisherId();
+        if (publisherId != null) {
+            String statusText = notice.getStatus() == 1 ? "已通过AI审核并发布"
+                    : notice.getStatus() == 2 ? "已被AI审核驳回，请联系管理员"
+                    : "已提交，等待管理员审核";
+            notificationService.send(publisherId,
+                    "公告发布通知",
+                    "您发布的公告「" + notice.getTitle() + "」" + statusText + "。",
+                    "NOTICE_PUBLISH", notice.getId());
+        }
+
         return notice.getId();
     }
 
