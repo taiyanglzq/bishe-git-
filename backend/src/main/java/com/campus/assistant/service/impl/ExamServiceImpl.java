@@ -135,9 +135,7 @@ public class ExamServiceImpl implements ExamService {
         RoleUtils.requireAny("ADMIN");
         Exam exam = examMapper.selectById(id);
         if (exam != null) {
-            exam.setDeleted(1);
-            exam.setUpdateTime(LocalDateTime.now());
-            examMapper.updateById(exam);
+            examMapper.deleteById(id);
         }
     }
 

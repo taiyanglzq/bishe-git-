@@ -222,9 +222,7 @@ public class NoticeServiceImpl implements NoticeService {
         Notice notice = noticeMapper.selectById(id);
         if (notice != null) {
             requireNoticeOwner(notice);
-            notice.setDeleted(1);
-            notice.setUpdateTime(LocalDateTime.now());
-            noticeMapper.updateById(notice);
+            noticeMapper.deleteById(id);
             evictNoticeRelatedCaches(id);
         }
     }

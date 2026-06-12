@@ -122,9 +122,7 @@ public class BookServiceImpl implements BookService {
         RoleUtils.requireAny("ADMIN");
         Book book = bookMapper.selectById(id);
         if (book != null) {
-            book.setDeleted(1);
-            book.setUpdateTime(LocalDateTime.now());
-            bookMapper.updateById(book);
+            bookMapper.deleteById(id);
         }
     }
 

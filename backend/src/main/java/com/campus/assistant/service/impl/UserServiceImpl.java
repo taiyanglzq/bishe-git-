@@ -95,9 +95,7 @@ public class UserServiceImpl implements UserService {
         RoleUtils.requireAny("ADMIN");
         User user = userMapper.selectById(id);
         if (user != null) {
-            user.setDeleted(1);
-            user.setUpdateTime(LocalDateTime.now());
-            userMapper.updateById(user);
+            userMapper.deleteById(id);
         }
     }
 

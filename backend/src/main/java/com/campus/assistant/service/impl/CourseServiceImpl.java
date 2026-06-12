@@ -116,9 +116,7 @@ public class CourseServiceImpl implements CourseService {
         RoleUtils.requireAny("ADMIN");
         Course course = courseMapper.selectById(id);
         if (course != null) {
-            course.setDeleted(1);
-            course.setUpdateTime(LocalDateTime.now());
-            courseMapper.updateById(course);
+            courseMapper.deleteById(id);
         }
     }
 }

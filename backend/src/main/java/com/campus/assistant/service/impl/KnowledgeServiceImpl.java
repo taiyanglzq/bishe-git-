@@ -183,9 +183,7 @@ public class KnowledgeServiceImpl implements KnowledgeService {
         RoleUtils.requireAny("ADMIN");
         KnowledgeEntry entry = knowledgeEntryMapper.selectById(id);
         if (entry != null) {
-            entry.setDeleted(1);
-            entry.setUpdateTime(LocalDateTime.now());
-            knowledgeEntryMapper.updateById(entry);
+            knowledgeEntryMapper.deleteById(id);
             evictKnowledgeCache();
         }
     }

@@ -248,9 +248,7 @@ public class DiscussionServiceImpl implements DiscussionService {
         if (!canDeletePost(post)) {
             throw new BusinessException(403, "无权删除该帖子");
         }
-        post.setDeleted(1);
-        post.setUpdateTime(LocalDateTime.now());
-        postMapper.updateById(post);
+        postMapper.deleteById(id);
         evictDiscussionCaches();
     }
 
@@ -263,9 +261,7 @@ public class DiscussionServiceImpl implements DiscussionService {
         if (!canDeleteComment(comment)) {
             throw new BusinessException(403, "无权删除该评论");
         }
-        comment.setDeleted(1);
-        comment.setUpdateTime(LocalDateTime.now());
-        commentMapper.updateById(comment);
+        commentMapper.deleteById(id);
         evictDiscussionCaches();
     }
 
