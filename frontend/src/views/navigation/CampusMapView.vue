@@ -64,7 +64,7 @@ import { ElMessage } from 'element-plus'
 import { Aim, Search, Location } from '@element-plus/icons-vue'
 
 // 高德地图 API Key（请替换为你自己的 Key）
-const AMAP_KEY = import.meta.env.VITE_AMAP_KEY || 'YOUR_AMAP_KEY'
+const AMAP_KEY = '1be18cc3fbfad471b1ae362ca8ebf6df'
 const AMAP_VERSION = '2.0'
 
 const searchText = ref('')
