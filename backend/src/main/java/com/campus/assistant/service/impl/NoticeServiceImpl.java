@@ -2,6 +2,10 @@ package com.campus.assistant.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.campus.assistant.ai.dto.ModerationRequest;
+import com.campus.assistant.ai.dto.ModerationResponse;
+import com.campus.assistant.ai.enums.ModerationResult;
+import com.campus.assistant.ai.service.ContentModerationService;
 import com.campus.assistant.common.cache.CacheClient;
 import com.campus.assistant.common.cache.CacheKeyConstants;
 import com.campus.assistant.common.exception.BusinessException;
@@ -46,6 +50,7 @@ public class NoticeServiceImpl implements NoticeService {
     private final UserMapper userMapper;
     private final CacheClient cacheClient;
     private final CacheEvictService cacheEvictService;
+    private final ContentModerationService contentModerationService;
 
     @Override
     public Page<Notice> page(Long current, Long size) {
@@ -127,7 +132,20 @@ public class NoticeServiceImpl implements NoticeService {
         if (RoleUtils.hasAny("ADMIN")) {
             notice.setStatus(1);
         } else {
-            notice.setStatus(0);
+            // AI 自动审核教师提交的公告
+            ModerationResponse moderation = contentModerationService.moderate(
+                    ModerationRequest.builder()
+                            .content(dto.getTitle() + " " + dto.getContent())
+                            .scene("公告")
+                            .userId(UserContext.getUserId())
+                            .build());
+            if (moderation.getResult() == ModerationResult.PASS) {
+                notice.setStatus(1);
+            } else if (moderation.getResult() == ModerationResult.BLOCK) {
+                notice.setStatus(2);
+            } else {
+                notice.setStatus(0);
+            }
         }
         notice.setPublisherId(UserContext.getUserId());
         notice.setScopeType(resolveScopeType(dto.getScopeType()));
