@@ -67,7 +67,7 @@ public class KnowledgeServiceImpl implements KnowledgeService {
         }
         // 先从缓存获取全量知识库
         String cacheKey = KNOWLEDGE_CACHE_PREFIX;
-        List<KnowledgeEntry> allEntries = cacheClient.get(cacheKey, List.class);
+        List<KnowledgeEntry> allEntries = cacheClient.getList(cacheKey, KnowledgeEntry.class);
         if (allEntries == null) {
             allEntries = knowledgeEntryMapper.selectList(new LambdaQueryWrapper<KnowledgeEntry>()
                     .eq(KnowledgeEntry::getDeleted, 0)

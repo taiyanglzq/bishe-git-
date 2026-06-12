@@ -11,13 +11,13 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/campus_assistant?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: root
-    password: 200424
+    password: your_password
   data:
     redis:
       database: 1
       host: localhost
       port: 6379
-      password: 2004lzqlzq
+      password: your_redis_password
   jackson:
     default-property-inclusion: non_null
     time-zone: GMT+8
@@ -25,7 +25,7 @@ spring:
     generator:
       WRITE_NUMBERS_AS_STRINGS: true
   kafka:
-    bootstrap-servers: 192.168.211.20:9092
+    bootstrap-servers: localhost:9092
     producer:
       retries: 1
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -78,10 +78,13 @@ management:
 
 app:
   ai:
-    enabled: false
+    enabled: true
     provider: deepseek
-    api-key:
+    api-key: ${DEEPSEEK_API_KEY}
     base-url: https://api.deepseek.com
     chat-model: deepseek-chat
     moderation-enabled: true
     assistant-enabled: true
+    qwen-api-key: ${QWEN_API_KEY}
+    qwen-base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    qwen-vision-model: qwen-vl-plus

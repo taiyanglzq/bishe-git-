@@ -43,6 +43,9 @@
             <article v-for="(item, index) in messages" :key="index" :class="['ai-message', item.role]">
               <div class="ai-message-bubble">
                 <p>{{ item.content }}</p>
+                <div v-if="item.images?.length" class="ai-message-images">
+                  <img v-for="(img, i) in item.images" :key="i" :src="img" class="ai-msg-img" />
+                </div>
                 <div v-if="item.suggestedAction" class="ai-message-action">
                   <el-button size="small" type="primary" link @click="jumpTo(item.suggestedAction)">前往相关页面</el-button>
                 </div>
@@ -52,6 +55,13 @@
 
           <!-- 输入区 -->
           <div class="ai-assistant-input">
+            <!-- 图片预览 -->
+            <div v-if="images.length" class="ai-image-preview">
+              <div v-for="(img, idx) in images" :key="idx" class="ai-image-thumb">
+                <img :src="img" alt="预览图片" />
+                <button class="ai-image-remove" @click="removeImage(idx)">×</button>
+              </div>
+            </div>
             <el-input
               v-model="question"
               type="textarea"
@@ -63,8 +73,23 @@
               @keydown.enter.exact.prevent="submit"
             />
             <div class="ai-assistant-actions">
-              <span class="ai-assistant-tip">按 Enter 发送，Shift + Enter 换行</span>
-              <el-button type="primary" :loading="loading" :disabled="!question.trim()" @click="submit">发送</el-button>
+              <div class="ai-assistant-actions-left">
+                <label class="ai-upload-btn">
+                  <input
+                    ref="fileInputRef"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    hidden
+                    @change="handleImageSelect"
+                  />
+                  <el-button size="small" text type="primary" @click="triggerUpload">
+                    <el-icon><Picture /></el-icon> 图片
+                  </el-button>
+                </label>
+                <span class="ai-assistant-tip">按 Enter 发送，Shift + Enter 换行</span>
+              </div>
+              <el-button type="primary" :loading="loading" :disabled="!question.trim() && !images.length" @click="submit">发送</el-button>
             </div>
           </div>
         </div>
@@ -82,7 +107,8 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { chatWithAi, getAiSessions, getAiSessionHistory, deleteAiSession } from '../api/ai'
+import { chatWithAi, chatWithImage, getAiSessions, getAiSessionHistory, deleteAiSession } from '../api/ai'
+import { Picture } from '@element-plus/icons-vue'
 import { useAuthStore } from '../stores/auth'
 import { getToken } from '../utils/auth'
 
@@ -98,6 +124,8 @@ const messages = ref([])
 const sessionId = ref(null)
 const sessions = ref([])
 const showSessions = ref(false)
+const images = ref([])
+const fileInputRef = ref(null)
 
 const visible = computed(() => {
   const hasToken = Boolean(getToken())
@@ -164,6 +192,7 @@ async function removeSession(sid) {
 
 function newChat() {
   sessionId.value = null
+  images.value = []
   resetMessages()
 }
 
@@ -174,14 +203,51 @@ function resetMessages() {
   }]
 }
 
+function triggerUpload() {
+  if (fileInputRef.value) {
+    fileInputRef.value.value = ''
+    fileInputRef.value.click()
+  }
+}
+
+function handleImageSelect(e) {
+  const files = Array.from(e.target.files || [])
+  files.forEach(file => {
+    if (images.value.length >= 4) {
+      ElMessage.warning('最多上传4张图片')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      images.value.push(ev.target.result)
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+function removeImage(idx) {
+  images.value.splice(idx, 1)
+}
+
 async function submit() {
   const text = question.value.trim()
-  if (!text || loading.value) return
-  messages.value.push({ role: 'user', content: text })
+  const hasImages = images.value.length > 0
+  if ((!text && !hasImages) || loading.value) return
+
+  const displayContent = text || '[图片消息]'
+  messages.value.push({ role: 'user', content: displayContent, images: [...images.value] })
+  const currentImages = [...images.value]
   question.value = ''
+  images.value = []
   loading.value = true
   try {
-    const data = await chatWithAi(text, sessionId.value)
+    let data
+    if (currentImages.length) {
+      const pureImages = currentImages.map(img => img.split(',')[1])
+      data = await chatWithImage(text || '请描述这张图片', pureImages, sessionId.value)
+    } else {
+      data = await chatWithAi(text, sessionId.value)
+    }
     if (data.sessionId && !sessionId.value) {
       sessionId.value = data.sessionId
     }
@@ -366,6 +432,71 @@ onMounted(() => {
 .ai-assistant-tip {
   font-size: 12px;
   color: #7a8799;
+}
+
+.ai-assistant-actions-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-upload-btn {
+  cursor: pointer;
+  display: inline-flex;
+}
+
+.ai-image-preview {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.ai-image-thumb {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(22, 67, 112, 0.1);
+}
+
+.ai-image-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ai-image-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-message-images {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.ai-msg-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  object-fit: cover;
 }
 
 .ai-assistant-fab {

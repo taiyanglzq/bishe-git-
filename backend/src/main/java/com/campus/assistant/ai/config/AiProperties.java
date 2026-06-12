@@ -19,4 +19,9 @@ public class AiProperties {
     private boolean assistantEnabled = false;
     private int connectTimeoutMillis = 10000;
     private int readTimeoutMillis = 30000;
+
+    /** 通义千问（多模态）配置 */
+    private String qwenApiKey;
+    private String qwenBaseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1";
+    private String qwenVisionModel = "qwen-vl-plus";
 }

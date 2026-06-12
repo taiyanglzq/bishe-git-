@@ -18,4 +18,11 @@ public class AiConfig {
                 .baseUrl(properties.getBaseUrl())
                 .build();
     }
+
+    @Bean
+    public RestClient qwenRestClient(AiProperties properties) {
+        return RestClient.builder()
+                .baseUrl(properties.getQwenBaseUrl())
+                .build();
+    }
 }

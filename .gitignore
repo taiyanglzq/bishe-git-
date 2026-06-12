@@ -20,6 +20,9 @@ frontend/dist/
 # Logs
 *.log
 
+# Sensitive config
+backend/src/main/resources/application-dev.yml
+
 # OS
 .DS_Store
 Thumbs.db

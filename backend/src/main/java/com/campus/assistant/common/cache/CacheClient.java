@@ -1,6 +1,7 @@
 package com.campus.assistant.common.cache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -39,6 +41,31 @@ public class CacheClient {
         } catch (JsonProcessingException e) {
             log.warn("CACHE_DESERIALIZE_FAIL key={}", key, e);   // 反序列化失败
             delete(key); // 删除损坏的缓存
+            return null;
+        }
+    }
+
+    /**
+     * 读取泛型 List 缓存，解决类型擦除导致的 LinkedHashMap 转换问题。
+     */
+    public <T> List<T> getList(String key, Class<T> elementType) {
+        String json = stringRedisTemplate.opsForValue().get(key);
+        if (json == null) {
+            log.info("CACHE_MISS key={}", key);
+            return null;
+        }
+        if (CacheKeyConstants.CACHE_NULL_VALUE.equals(json)) {
+            log.info("CACHE_HIT_NULL key={}", key);
+            return null;
+        }
+        try {
+            JavaType type = objectMapper.getTypeFactory().constructCollectionType(List.class, elementType);
+            List<T> result = objectMapper.readValue(json, type);
+            log.info("CACHE_HIT key={}", key);
+            return result;
+        } catch (JsonProcessingException e) {
+            log.warn("CACHE_DESERIALIZE_FAIL key={}", key, e);
+            delete(key);
             return null;
         }
     }

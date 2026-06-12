@@ -13,39 +13,41 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 多模态 AI 客户端，支持文本+图片输入（兼容 OpenAI Vision API 格式）。
+ * 多模态 AI 客户端，使用通义千问 Vision 模型处理文本+图片输入。
  */
 @Component
 @RequiredArgsConstructor
 public class MultimodalClient {
 
-    private final RestClient aiRestClient;
+    private final RestClient qwenRestClient;
     private final AiProperties aiProperties;
 
     /**
-     * 发送多模态请求（文本+图片）
+     * 发送多模态请求到通义千问（文本+图片）
      */
     public String chat(String systemPrompt, String userText, List<String> base64Images) {
-        if (!aiProperties.isEnabled() || aiProperties.getApiKey() == null
-                || aiProperties.getApiKey().isBlank()) {
+        if (!aiProperties.isEnabled()
+                || aiProperties.getQwenApiKey() == null
+                || aiProperties.getQwenApiKey().isBlank()) {
             return null;
         }
 
         List<Map<String, Object>> userContent = new ArrayList<>();
-        // 先添加文本
-        Map<String, Object> textPart = new HashMap<>();
-        textPart.put("type", "text");
-        textPart.put("text", userText);
-        userContent.add(textPart);
+        // 文本部分
+        if (userText != null && !userText.isBlank()) {
+            Map<String, Object> textPart = new HashMap<>();
+            textPart.put("type", "text");
+            textPart.put("text", userText);
+            userContent.add(textPart);
+        }
 
-        // 添加图片
+        // 图片部分
         if (base64Images != null) {
             for (String img : base64Images) {
                 Map<String, Object> imgPart = new HashMap<>();
                 imgPart.put("type", "image_url");
                 Map<String, String> imgUrl = new HashMap<>();
                 imgUrl.put("url", "data:image/jpeg;base64," + img);
-                imgUrl.put("detail", "auto");
                 imgPart.put("image_url", imgUrl);
                 userContent.add(imgPart);
             }
@@ -58,14 +60,14 @@ public class MultimodalClient {
         messages.add(Map.of("role", "user", "content", userContent));
 
         Map<String, Object> payload = new HashMap<>();
-        payload.put("model", aiProperties.getChatModel());
+        payload.put("model", aiProperties.getQwenVisionModel());
         payload.put("messages", messages);
         payload.put("temperature", 0.2);
         payload.put("max_tokens", 1024);
 
-        Map<?, ?> response = aiRestClient.post()
+        Map<?, ?> response = qwenRestClient.post()
                 .uri("/chat/completions")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + aiProperties.getApiKey())
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + aiProperties.getQwenApiKey())
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(payload)
                 .retrieve()
