@@ -29,4 +29,8 @@ public interface NoticeService {
     void update(NoticeSaveDTO dto);
 
     void delete(Long id);
+
+    void approve(Long id);
+
+    void reject(Long id);
 }

@@ -73,10 +73,21 @@
             <el-table :data="notices" border style="border: none;">
               <el-table-column prop="title" label="标题" min-width="180" show-overflow-tooltip />
               <el-table-column prop="category" label="分类" width="110" />
+              <el-table-column label="审核状态" width="100">
+                <template #default="{ row }">
+                  <el-tag v-if="row.status === 0" size="small" type="warning">待审核</el-tag>
+                  <el-tag v-else-if="row.status === 1" size="small" type="success">已通过</el-tag>
+                  <el-tag v-else-if="row.status === 2" size="small" type="danger">已驳回</el-tag>
+                </template>
+              </el-table-column>
               <el-table-column prop="scopeType" label="范围" width="90" />
               <el-table-column prop="scopeCollege" label="院系" width="140" />
-              <el-table-column label="操作" width="150">
+              <el-table-column label="操作" min-width="200">
                 <template #default="{ row }">
+                  <template v-if="isAdmin && row.status === 0">
+                    <el-button size="small" type="success" @click="handleApprove(row.id)">通过</el-button>
+                    <el-button size="small" type="danger" @click="handleReject(row.id)">驳回</el-button>
+                  </template>
                   <el-button size="small" text type="primary" @click="editNotice(row)">编辑</el-button>
                   <el-button size="small" text type="danger" @click="removeNotice(row.id)">删除</el-button>
                 </template>
@@ -161,7 +172,7 @@ import { UserFilled, ChatLineSquare, Collection } from '@element-plus/icons-vue'
 import { useAuthStore } from '../../stores/auth'
 import { createUser, deleteUser, getUserPage, updateUser } from '../../api/auth'
 import { createBook, deleteBook, getBookManagePage, updateBook } from '../../api/book'
-import { createNotice, deleteNotice, getNoticeManagePage, updateNotice } from '../../api/notice'
+import { approveNotice, createNotice, deleteNotice, getNoticeManagePage, rejectNotice, updateNotice } from '../../api/notice'
 import { uploadImage } from '../../api/upload'
 
 const ImageUploader = defineComponent({
@@ -263,6 +274,8 @@ async function confirmDelete(name) {
 
 async function removeUser(id) { if (!await confirmDelete('用户')) return; await deleteUser(id); ElMessage.success('用户已删除'); resetUserForm(); await loadUsers() }
 async function removeNotice(id) { if (!await confirmDelete('公告')) return; await deleteNotice(id); ElMessage.success('公告已删除'); resetNoticeForm(); await loadNotices() }
+async function handleApprove(id) { await approveNotice(id); ElMessage.success('公告已通过审核'); await loadNotices() }
+async function handleReject(id) { await rejectNotice(id); ElMessage.success('公告已驳回'); await loadNotices() }
 
 function editUser(row) { Object.assign(userForm, { id: row.id, loginNo: row.username, realName: row.realName, college: row.college || '计算机学院', roleCode: row.roleCode, password: '', status: row.status }) }
 function editNotice(row) { Object.assign(noticeForm, { id: row.id, title: row.title, category: row.category, content: row.content, scopeType: row.scopeType || 'COLLEGE', scopeCollege: row.scopeCollege || '计算机学院', status: row.status }) }

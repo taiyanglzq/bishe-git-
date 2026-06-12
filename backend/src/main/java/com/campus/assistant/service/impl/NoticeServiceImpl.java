@@ -123,7 +123,12 @@ public class NoticeServiceImpl implements NoticeService {
         notice.setTitle(dto.getTitle());
         notice.setCategory(dto.getCategory());
         notice.setContent(dto.getContent());
-        notice.setStatus(dto.getStatus() == null ? 1 : dto.getStatus());
+        // 管理员发布直接通过，教师发布需审核
+        if (RoleUtils.hasAny("ADMIN")) {
+            notice.setStatus(1);
+        } else {
+            notice.setStatus(0);
+        }
         notice.setPublisherId(UserContext.getUserId());
         notice.setScopeType(resolveScopeType(dto.getScopeType()));
         notice.setScopeCollege(resolveScopeCollege(dto.getScopeCollege()));
@@ -134,6 +139,32 @@ public class NoticeServiceImpl implements NoticeService {
         noticeMapper.insert(notice);
         evictNoticeRelatedCaches(notice.getId());
         return notice.getId();
+    }
+
+    @Override
+    public void approve(Long id) {
+        RoleUtils.requireAny("ADMIN");
+        Notice notice = noticeMapper.selectById(id);
+        if (notice == null || notice.getDeleted() == 1) {
+            throw new BusinessException(404, "公告不存在");
+        }
+        notice.setStatus(1);
+        notice.setUpdateTime(LocalDateTime.now());
+        noticeMapper.updateById(notice);
+        evictNoticeRelatedCaches(id);
+    }
+
+    @Override
+    public void reject(Long id) {
+        RoleUtils.requireAny("ADMIN");
+        Notice notice = noticeMapper.selectById(id);
+        if (notice == null || notice.getDeleted() == 1) {
+            throw new BusinessException(404, "公告不存在");
+        }
+        notice.setStatus(2);
+        notice.setUpdateTime(LocalDateTime.now());
+        noticeMapper.updateById(notice);
+        evictNoticeRelatedCaches(id);
     }
 
     @Override
@@ -231,10 +262,10 @@ public class NoticeServiceImpl implements NoticeService {
             return null;
         }
         String currentCollege = currentCollege();
-        String college = scopeCollege == null || scopeCollege.isBlank() ? currentCollege : scopeCollege;
-        if (!RoleUtils.hasAny("ADMIN") && (college == null || !college.equals(currentCollege))) {
-            throw new BusinessException(403, "教师只能发布本院系公告");
+        if (currentCollege == null || currentCollege.isBlank()) {
+            return scopeCollege;
         }
+        String college = scopeCollege == null || scopeCollege.isBlank() ? currentCollege : scopeCollege;
         return college;
     }
 

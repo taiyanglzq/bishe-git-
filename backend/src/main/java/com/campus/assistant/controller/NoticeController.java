@@ -75,4 +75,16 @@ public class NoticeController {
         noticeService.delete(id);
         return Result.success();
     }
+
+    @PutMapping("/approve/{id}")
+    public Result<Void> approve(@PathVariable Long id) {
+        noticeService.approve(id);
+        return Result.success();
+    }
+
+    @PutMapping("/reject/{id}")
+    public Result<Void> reject(@PathVariable Long id) {
+        noticeService.reject(id);
+        return Result.success();
+    }
 }

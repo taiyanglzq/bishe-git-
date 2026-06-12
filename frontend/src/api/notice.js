@@ -28,3 +28,11 @@ export function updateNotice(data) {
 export function deleteNotice(id) {
   return request.delete(`/notice/${id}`)
 }
+
+export function approveNotice(id) {
+  return request.put(`/notice/approve/${id}`)
+}
+
+export function rejectNotice(id) {
+  return request.put(`/notice/reject/${id}`)
+}
