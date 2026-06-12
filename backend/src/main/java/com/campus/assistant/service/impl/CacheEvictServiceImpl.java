@@ -27,11 +27,6 @@ public class CacheEvictServiceImpl implements CacheEvictService {
     }
 
     @Override
-    public void evictVenueCaches() {
-        cacheClient.delete(cacheClient.scan(CacheKeyConstants.VENUE_PAGE + "*"));
-    }
-
-    @Override
     public void evictNoticePageCaches() {
         cacheClient.delete(cacheClient.scan(CacheKeyConstants.NOTICE_PAGE + "*"));
     }
@@ -42,11 +37,6 @@ public class CacheEvictServiceImpl implements CacheEvictService {
             return;
         }
         cacheClient.delete(cacheClient.scan(CacheKeyConstants.NOTICE_DETAIL + noticeId + ":*"));
-    }
-
-    @Override
-    public void evictActivityCaches() {
-        cacheClient.delete(cacheClient.scan(CacheKeyConstants.ACTIVITY_PAGE + "*"));
     }
 
     @Override

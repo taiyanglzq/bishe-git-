@@ -171,7 +171,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { previewModeration } from '../../api/ai'
 import { useAuthStore } from '../../stores/auth'
-import { uploadImage } from '../../api/venue'
+import { uploadImage } from '../../api/upload'
 import {
   banDiscussionUser,
   createDiscussionComment,

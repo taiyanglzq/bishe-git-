@@ -25,8 +25,6 @@ public class RecommendationServiceImpl implements RecommendationService {
     private static final long RECOMMENDATION_TTL_MINUTES = 10L;
 
     private final NoticeMapper noticeMapper;
-    private final ActivityMapper activityMapper;
-    private final VenueMapper venueMapper;
     private final CourseMapper courseMapper;
     private final BookMapper bookMapper;
     private final KnowledgeEntryMapper knowledgeEntryMapper;
@@ -50,19 +48,6 @@ public class RecommendationServiceImpl implements RecommendationService {
                 .eq(Notice::getDeleted, 0)
                 .eq(Notice::getStatus, 1)
                 .orderByDesc(Notice::getViewCount)
-                .last("limit 5")));
-
-        // 活动推荐（最新发布）
-        result.put("activities", activityMapper.selectList(new LambdaQueryWrapper<Activity>()
-                .eq(Activity::getDeleted, 0)
-                .eq(Activity::getStatus, 1)
-                .orderByDesc(Activity::getCreateTime)
-                .last("limit 5")));
-
-        // 场地推荐
-        result.put("venues", venueMapper.selectList(new LambdaQueryWrapper<Venue>()
-                .eq(Venue::getDeleted, 0)
-                .eq(Venue::getStatus, 1)
                 .last("limit 5")));
 
         // 课程推荐（同院系课程）

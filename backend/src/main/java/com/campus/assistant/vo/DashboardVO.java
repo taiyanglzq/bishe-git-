@@ -12,8 +12,6 @@ public class DashboardVO {
 
     private Long userCount;
     private Long noticeCount;
-    private Long venueCount;
-    private Long activityCount;
-    private Long bookingCount;
-    private Long checkinCount;
+    private Long courseCount;
+    private Long examCount;
 }

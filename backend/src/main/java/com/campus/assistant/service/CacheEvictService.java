@@ -9,13 +9,9 @@ public interface CacheEvictService {
 
     void evictRecommendationCaches();
 
-    void evictVenueCaches();
-
     void evictNoticePageCaches();
 
     void evictNoticeDetailCaches(Long noticeId);
-
-    void evictActivityCaches();
 
     void evictNotificationCaches(Long userId);
 

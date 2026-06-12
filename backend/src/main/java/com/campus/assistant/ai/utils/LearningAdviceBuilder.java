@@ -1,14 +1,16 @@
 package com.campus.assistant.ai.utils;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.campus.assistant.entity.*;
-import com.campus.assistant.mapper.*;
+import com.campus.assistant.entity.Course;
+import com.campus.assistant.entity.Exam;
+import com.campus.assistant.entity.User;
+import com.campus.assistant.mapper.CourseMapper;
+import com.campus.assistant.mapper.ExamMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 学习建议上下文构建器，根据用户数据构建个性化学习建议 prompt。
@@ -19,8 +21,6 @@ public class LearningAdviceBuilder {
 
     private final CourseMapper courseMapper;
     private final ExamMapper examMapper;
-    private final ActivityEnrollMapper activityEnrollMapper;
-    private final CheckinMapper checkinMapper;
 
     /**
      * 构建个性化学习建议的系统提示词
@@ -64,16 +64,6 @@ public class LearningAdviceBuilder {
                 sb.append("\n");
             }
         }
-
-        // 学生的活动签到统计
-        Long enrolledCount = activityEnrollMapper.selectCount(new LambdaQueryWrapper<ActivityEnroll>()
-                .eq(ActivityEnroll::getStudentId, user.getId())
-                .eq(ActivityEnroll::getDeleted, 0));
-        Long checkinCount = checkinMapper.selectCount(new LambdaQueryWrapper<Checkin>()
-                .eq(Checkin::getStudentId, user.getId())
-                .eq(Checkin::getDeleted, 0));
-        sb.append("【学生活动参与】已报名 ").append(enrolledCount)
-                .append(" 个活动，已签到 ").append(checkinCount).append(" 次。\n\n");
 
         String adviceType = type != null ? type : "study_plan";
         switch (adviceType) {

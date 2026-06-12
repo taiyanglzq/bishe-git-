@@ -32,9 +32,8 @@
 
           <!-- 快捷操作 -->
           <div class="ai-assistant-quick">
-            <el-button size="small" plain @click="usePrompt('怎么预约场地？')">预约流程</el-button>
-            <el-button size="small" plain @click="usePrompt('我的场地预约状态怎么样？')">预约状态</el-button>
-            <el-button size="small" plain @click="usePrompt('我的活动报名状态怎么样？')">报名状态</el-button>
+            <el-button size="small" plain @click="usePrompt('图书馆开放时间是几点？')">图书馆</el-button>
+            <el-button size="small" plain @click="usePrompt('怎么查询我的考试成绩？')">考试查询</el-button>
             <el-button size="small" plain @click="showSessions = !showSessions">{{ showSessions ? '隐藏' : '历史' }}</el-button>
           </div>
 

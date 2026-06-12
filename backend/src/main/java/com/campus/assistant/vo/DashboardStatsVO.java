@@ -13,12 +13,6 @@ import java.util.List;
 public class DashboardStatsVO {
 
     private DashboardVO summary;
-    private List<NameValueVO> bookingStatus;
-    private List<NameValueVO> activityEnrollRank;
-    private List<NameValueVO> venueBookingRank;
-    private Long enrollCount;
-    private Long checkinCount;
-    private Double checkinRate;
 
     @Data
     @Builder

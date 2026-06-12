@@ -7,9 +7,6 @@ const LoginView = () => import('../views/login/LoginView.vue')
 const AdminLayout = () => import('../layout/AdminLayout.vue')
 const DashboardView = () => import('../views/dashboard/DashboardView.vue')
 const NoticeView = () => import('../views/notice/NoticeView.vue')
-const VenueView = () => import('../views/venue/VenueView.vue')
-const BookingView = () => import('../views/booking/BookingView.vue')
-const ActivityView = () => import('../views/activity/ActivityView.vue')
 const DiscussionView = () => import('../views/discussion/DiscussionView.vue')
 const CourseView = () => import('../views/course/CourseView.vue')
 const ExamView = () => import('../views/exam/ExamView.vue')
@@ -32,9 +29,6 @@ const router = createRouter({
       children: [
         { path: 'dashboard', component: DashboardView, meta: { title: '首页工作台' } },
         { path: 'notice', component: NoticeView, meta: { title: '校园公告' } },
-        { path: 'venue', component: VenueView, meta: { title: '场地资源' } },
-        { path: 'booking', component: BookingView, meta: { title: '场地预约' } },
-        { path: 'activity', component: ActivityView, meta: { title: '活动与签到' } },
         { path: 'discussion', component: DiscussionView, meta: { title: '讨论交流' } },
         { path: 'course', component: CourseView, meta: { title: '课程查询' } },
         { path: 'exam', component: ExamView, meta: { title: '考试安排' } },

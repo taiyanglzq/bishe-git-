@@ -14,10 +14,7 @@ public class DashboardWorkbenchVO {
 
     private String roleName;
     private String welcomeText;
-    private Long pendingBookingCount;
     private Long unreadNotificationCount;
-    private Long todayBookingCount;
-    private Long upcomingActivityCount;
     private List<WorkbenchItemVO> todos;
     private List<WorkbenchItemVO> schedules;
 
