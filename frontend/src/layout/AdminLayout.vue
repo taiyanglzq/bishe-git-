@@ -98,7 +98,7 @@ import { useAuthStore } from '../stores/auth'
 import {
   HomeFilled, Bell, User, SwitchButton, ArrowDown, Fold, Expand,
   DataBoard, ChatLineSquare, OfficeBuilding, Calendar,
-  Star, MagicStick, Setting, Document, Tickets
+  Star, MagicStick, Setting, Document, Tickets, Reading, AlarmClock, Collection, MapLocation
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -118,6 +118,10 @@ const allMenus = [
   { path: '/venue', title: '场地资源', icon: OfficeBuilding, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
   { path: '/booking', title: '场地预约', icon: Calendar, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
   { path: '/activity', title: '活动签到', icon: Star, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
+  { path: '/course', title: '课程查询', icon: Reading, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
+  { path: '/exam', title: '考试安排', icon: AlarmClock, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
+  { path: '/book', title: '图书检索', icon: Collection, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
+  { path: '/navigation', title: '校园导航', icon: MapLocation, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
   { path: '/discussion', title: '讨论交流', icon: Tickets, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
   { path: '/recommendation', title: '个性化推荐', icon: MagicStick, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },
   { path: '/notification', title: '通知中心', icon: Bell, roles: ['STUDENT', 'TEACHER', 'ADMIN'], group: 'main' },

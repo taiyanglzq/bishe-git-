@@ -1,6 +1,10 @@
 package com.campus.assistant.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.campus.assistant.common.cache.CacheClient;
+import com.campus.assistant.common.cache.CacheKeyConstants;
+import com.campus.assistant.common.utils.RoleUtils;
+import com.campus.assistant.common.utils.UserContext;
 import com.campus.assistant.entity.Activity;
 import com.campus.assistant.entity.ActivityEnroll;
 import com.campus.assistant.entity.Booking;
@@ -20,8 +24,6 @@ import com.campus.assistant.service.DashboardService;
 import com.campus.assistant.vo.DashboardStatsVO;
 import com.campus.assistant.vo.DashboardVO;
 import com.campus.assistant.vo.DashboardWorkbenchVO;
-import com.campus.assistant.common.utils.RoleUtils;
-import com.campus.assistant.common.utils.UserContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -30,13 +32,18 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
- * ???? ????????????????????
+ * 数据看板服务实现，负责组装首页统计数据和工作台内容，并对高频读取结果做缓存。
  */
 @Service
 @RequiredArgsConstructor
 public class DashboardServiceImpl implements DashboardService {
+
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy年MM月dd日 HH:mm");
+    private static final long STATS_TTL_MINUTES = 5L;
+    private static final long WORKBENCH_TTL_MINUTES = 3L;
 
     private final UserMapper userMapper;
     private final NoticeMapper noticeMapper;
@@ -46,31 +53,31 @@ public class DashboardServiceImpl implements DashboardService {
     private final CheckinMapper checkinMapper;
     private final ActivityEnrollMapper activityEnrollMapper;
     private final NotificationMapper notificationMapper;
-
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy年MM月dd日 HH:mm");
+    private final CacheClient cacheClient;
 
     @Override
     public DashboardVO summary() {
-        return DashboardVO.builder()
-                .userCount(userMapper.selectCount(null))
-                .noticeCount(noticeMapper.selectCount(null))
-                .venueCount(venueMapper.selectCount(null))
-                .activityCount(activityMapper.selectCount(null))
-                .bookingCount(bookingMapper.selectCount(null))
-                .checkinCount(checkinMapper.selectCount(null))
-                .build();
+        return stats().getSummary();
     }
 
     @Override
     public DashboardStatsVO stats() {
+        String roleCode = currentRoleCode();
+        String cacheKey = CacheKeyConstants.DASHBOARD_STATS + roleCode;
+        DashboardStatsVO cached = cacheClient.get(cacheKey, DashboardStatsVO.class);
+        if (cached != null) {
+            return cached;
+        }
+
+        DashboardVO summary = buildSummary();
         Long enrollCount = activityEnrollMapper.selectCount(new LambdaQueryWrapper<ActivityEnroll>()
                 .eq(ActivityEnroll::getDeleted, 0));
         Long checkinCount = checkinMapper.selectCount(new LambdaQueryWrapper<Checkin>()
                 .eq(Checkin::getDeleted, 0));
-        double checkinRate = enrollCount == 0 ? 0 : Math.round(checkinCount * 10000.0 / enrollCount) / 100.0;
+        double checkinRate = enrollCount == 0 ? 0D : Math.round(checkinCount * 10000.0 / enrollCount) / 100.0;
 
-        return DashboardStatsVO.builder()
-                .summary(summary())
+        DashboardStatsVO result = DashboardStatsVO.builder()
+                .summary(summary)
                 .bookingStatus(List.of(
                         item("待审核", countBookingStatus("PENDING")),
                         item("已通过", countBookingStatus("APPROVED")),
@@ -84,33 +91,33 @@ public class DashboardServiceImpl implements DashboardService {
                         .stream()
                         .map(activity -> item(activity.getTitle(), activity.getEnrolledCount() == null ? 0L : activity.getEnrolledCount().longValue()))
                         .toList())
-                .venueBookingRank(venueMapper.selectList(new LambdaQueryWrapper<Venue>()
-                                .eq(Venue::getDeleted, 0))
-                        .stream()
-                        .map(venue -> item(venue.getName(), bookingMapper.selectCount(new LambdaQueryWrapper<Booking>()
-                                .eq(Booking::getVenueId, venue.getId())
-                                .eq(Booking::getDeleted, 0))))
-                        .sorted((left, right) -> Long.compare(right.getValue(), left.getValue()))
-                        .limit(5)
-                        .toList())
+                .venueBookingRank(buildVenueBookingRank())
                 .enrollCount(enrollCount)
                 .checkinCount(checkinCount)
                 .checkinRate(checkinRate)
                 .build();
+        cacheClient.set(cacheKey, result, STATS_TTL_MINUTES, TimeUnit.MINUTES);
+        return result;
     }
 
     @Override
     public DashboardWorkbenchVO workbench() {
         User currentUser = UserContext.get();
         Long userId = UserContext.getUserId();
-        String roleCode = currentUser == null ? "STUDENT" : currentUser.getRoleCode();
+        String roleCode = currentRoleCode();
+        String cacheKey = CacheKeyConstants.DASHBOARD_WORKBENCH + roleCode + ":" + (userId == null ? 0L : userId);
+        DashboardWorkbenchVO cached = cacheClient.get(cacheKey, DashboardWorkbenchVO.class);
+        if (cached != null) {
+            return cached;
+        }
+
         Long pendingBookingCount = countVisiblePendingBookings(currentUser);
         Long unreadNotificationCount = userId == null ? 0L : notificationMapper.selectCount(new LambdaQueryWrapper<Notification>()
                 .eq(Notification::getReceiverId, userId)
                 .eq(Notification::getReadStatus, 0)
                 .eq(Notification::getDeleted, 0));
 
-        return DashboardWorkbenchVO.builder()
+        DashboardWorkbenchVO result = DashboardWorkbenchVO.builder()
                 .roleName(roleName(roleCode))
                 .welcomeText(welcomeText(currentUser, roleCode))
                 .pendingBookingCount(pendingBookingCount)
@@ -120,6 +127,31 @@ public class DashboardServiceImpl implements DashboardService {
                 .todos(buildTodos(currentUser))
                 .schedules(buildSchedules(currentUser))
                 .build();
+        cacheClient.set(cacheKey, result, WORKBENCH_TTL_MINUTES, TimeUnit.MINUTES);
+        return result;
+    }
+
+    private DashboardVO buildSummary() {
+        return DashboardVO.builder()
+                .userCount(userMapper.selectCount(null))
+                .noticeCount(noticeMapper.selectCount(null))
+                .venueCount(venueMapper.selectCount(null))
+                .activityCount(activityMapper.selectCount(null))
+                .bookingCount(bookingMapper.selectCount(null))
+                .checkinCount(checkinMapper.selectCount(null))
+                .build();
+    }
+
+    private List<DashboardStatsVO.NameValueVO> buildVenueBookingRank() {
+        return venueMapper.selectList(new LambdaQueryWrapper<Venue>()
+                        .eq(Venue::getDeleted, 0))
+                .stream()
+                .map(venue -> item(venue.getName(), bookingMapper.selectCount(new LambdaQueryWrapper<Booking>()
+                        .eq(Booking::getVenueId, venue.getId())
+                        .eq(Booking::getDeleted, 0))))
+                .sorted((left, right) -> Long.compare(right.getValue(), left.getValue()))
+                .limit(5)
+                .toList();
     }
 
     private Long countBookingStatus(String status) {
@@ -200,14 +232,13 @@ public class DashboardServiceImpl implements DashboardService {
                     .eq(Notification::getReadStatus, 0)
                     .eq(Notification::getDeleted, 0)
                     .orderByDesc(Notification::getCreateTime)
-                    .last("limit 3"))
-                    .forEach(notification -> todos.add(workbenchItem(
-                            notification.getTitle(),
-                            notification.getContent(),
-                            "未读通知",
-                            notification.getCreateTime(),
-                            notification.getId()
-                    )));
+                    .last("limit 3")).forEach(notification -> todos.add(workbenchItem(
+                    notification.getTitle(),
+                    notification.getContent(),
+                    "未读通知",
+                    notification.getCreateTime(),
+                    notification.getId()
+            )));
         }
         return todos.stream().limit(5).toList();
     }
@@ -275,6 +306,11 @@ public class DashboardServiceImpl implements DashboardService {
                 .timeText(time == null ? "" : DATE_TIME_FORMATTER.format(time))
                 .bizId(bizId)
                 .build();
+    }
+
+    private String currentRoleCode() {
+        User currentUser = UserContext.get();
+        return currentUser == null || currentUser.getRoleCode() == null ? "STUDENT" : currentUser.getRoleCode();
     }
 
     private String roleName(String roleCode) {

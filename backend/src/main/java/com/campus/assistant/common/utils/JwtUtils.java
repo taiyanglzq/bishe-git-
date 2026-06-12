@@ -30,18 +30,18 @@ public class JwtUtils {
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claims(Map.of("username", username, "roleCode", roleCode))
-                .issuedAt(now)
-                .expiration(expireAt)
+                .issuedAt(now)  //issuedAt：Token 什么时候创建的
+                .expiration(expireAt)  //expiration：Token 什么时候失效
                 .signWith(secretKey())
-                .compact();
+                .compact();  //将所有的信息压缩成一个字符串
     }
 
-    public Claims parse(String token) {
+    public Claims parse(String token) {  //输入：token - JWT 字符串  输出：Claims - JWT 的载荷数据
         return Jwts.parser()
                 .verifyWith(secretKey())
                 .build()
-                .parseSignedClaims(token)
-                .getPayload();
+                .parseSignedClaims(token)//：解析并验证 Token
+                .getPayload();  //获取载荷数据
     }
 
     private SecretKey secretKey() {
