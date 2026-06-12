@@ -39,7 +39,7 @@
         </div>
         <div class="panel-card-body" style="max-height: 320px; overflow-y: auto;">
           <template v-if="workbench.todos?.length">
-            <div v-for="item in workbench.todos" :key="`${item.type}-${item.bizId}`" class="notification-item" style="margin-bottom: 8px;">
+            <div v-for="item in workbench.todos" :key="`${item.type}-${item.bizId}`" class="notification-item" style="margin-bottom: 8px; cursor: pointer;" @click="goTo('/notification')">
               <div class="notification-item-dot"></div>
               <div class="notification-item-content">
                 <strong>{{ item.title }}</strong>
@@ -79,11 +79,12 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { Bell, UserFilled, ChatDotRound, DataLine, Reading } from '@element-plus/icons-vue'
 import { getDashboardStats, getDashboardWorkbench } from '../../api/dashboard'
 
 const route = useRoute()
+const router = useRouter()
 const stats = ref({})
 const workbench = ref({})
 
@@ -107,6 +108,8 @@ const metrics = computed(() => {
     { label: '未读通知', value: workbench.value.unreadNotificationCount || 0, sub: '等待查看', icon: Bell, color: 'red' }
   ]
 })
+
+function goTo(path) { router.push(path) }
 
 async function loadData() {
   const [s, w] = await Promise.all([getDashboardStats(), getDashboardWorkbench()])
