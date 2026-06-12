@@ -120,7 +120,7 @@ public class DashboardServiceImpl implements DashboardService {
                     .eq(Notification::getReadStatus, 0)
                     .eq(Notification::getDeleted, 0)
                     .orderByDesc(Notification::getCreateTime)
-                    .last("limit 5")).forEach(notification -> todos.add(workbenchItem(
+                    .last("limit 20")).forEach(notification -> todos.add(workbenchItem(
                     notification.getTitle(),
                     notification.getContent(),
                     "未读通知",
@@ -128,7 +128,7 @@ public class DashboardServiceImpl implements DashboardService {
                     notification.getId()
             )));
         }
-        return todos.stream().limit(5).toList();
+        return todos;
     }
 
     private List<DashboardWorkbenchVO.WorkbenchItemVO> buildSchedules(User currentUser) {

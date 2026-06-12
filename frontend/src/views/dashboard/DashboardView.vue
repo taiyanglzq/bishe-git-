@@ -37,7 +37,7 @@
           <h3>待办事项</h3>
           <el-tag size="small" type="warning">{{ workbench.unreadNotificationCount || 0 }} 条未读</el-tag>
         </div>
-        <div class="panel-card-body">
+        <div class="panel-card-body" style="max-height: 320px; overflow-y: auto;">
           <template v-if="workbench.todos?.length">
             <div v-for="item in workbench.todos" :key="`${item.type}-${item.bizId}`" class="notification-item" style="margin-bottom: 8px;">
               <div class="notification-item-dot"></div>
@@ -58,7 +58,7 @@
           <h3>近期日程</h3>
           <el-tag size="small" type="success">考试提醒</el-tag>
         </div>
-        <div class="panel-card-body">
+        <div class="panel-card-body" style="max-height: 320px; overflow-y: auto;">
           <template v-if="workbench.schedules?.length">
             <div v-for="item in workbench.schedules" :key="`${item.type}-${item.bizId}`" class="notification-item" style="margin-bottom: 8px;">
               <div class="notification-item-dot" style="background: var(--success);"></div>
@@ -78,10 +78,12 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { Bell, UserFilled, ChatDotRound, DataLine, Reading } from '@element-plus/icons-vue'
 import { getDashboardStats, getDashboardWorkbench } from '../../api/dashboard'
 
+const route = useRoute()
 const stats = ref({})
 const workbench = ref({})
 
@@ -106,9 +108,16 @@ const metrics = computed(() => {
   ]
 })
 
-onMounted(async () => {
+async function loadData() {
   const [s, w] = await Promise.all([getDashboardStats(), getDashboardWorkbench()])
   stats.value = s
   workbench.value = w
+}
+
+onMounted(loadData)
+
+// 每次回到首页都重新加载数据
+watch(() => route.path, (path) => {
+  if (path === '/dashboard') loadData()
 })
 </script>

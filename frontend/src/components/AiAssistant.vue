@@ -1,10 +1,10 @@
 <template>
   <Teleport to="body">
-    <div v-if="visible" class="ai-assistant">
+    <div v-if="visible" class="ai-assistant" :style="{ right: fabPosition.x + 'px', bottom: fabPosition.y + 'px' }">
       <transition name="ai-float">
-        <div v-if="open" class="ai-assistant-panel">
-          <!-- 头部 -->
-          <div class="ai-assistant-header">
+        <div v-if="open" class="ai-assistant-panel" :style="panelStyle">
+          <!-- 头部 - 添加拖动手柄 -->
+          <div class="ai-assistant-header" @mousedown="startDragPanel">
             <div>
               <strong>AI 客服助手</strong>
               <p>支持多轮对话和个人状态查询</p>
@@ -94,7 +94,12 @@
         </div>
       </transition>
 
-      <button class="ai-assistant-fab" @click="toggle">
+      <button
+        class="ai-assistant-fab"
+        @mousedown="startDragFab"
+        @touchstart="startDragFabTouch"
+        @click="toggleFab"
+      >
         <span>AI</span>
         <small>助手</small>
       </button>
@@ -103,7 +108,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { chatWithAi, chatWithImage, getAiSessions, getAiSessionHistory, deleteAiSession } from '../api/ai'
@@ -126,6 +131,132 @@ const showSessions = ref(false)
 const images = ref([])
 const fileInputRef = ref(null)
 
+// 拖动相关状态
+const fabPosition = reactive({ x: 28, y: 24 })
+const panelPosition = reactive({ x: 0, y: 0 })
+const isDraggingFab = ref(false)
+const isDraggingPanel = ref(false)
+const fabDragDistance = ref(0)
+const dragStartPos = reactive({ x: 0, y: 0 })
+const dragStartElementPos = reactive({ x: 0, y: 0 })
+
+// 计算面板样式
+const panelStyle = computed(() => {
+  if (panelPosition.x === 0 && panelPosition.y === 0) return {}
+  return {
+    transform: `translate(${panelPosition.x}px, ${panelPosition.y}px)`
+  }
+})
+
+// FAB拖动处理
+function startDragFab(e) {
+  e.preventDefault()
+  fabDragDistance.value = 0
+  isDraggingFab.value = true
+  dragStartPos.x = e.clientX
+  dragStartPos.y = e.clientY
+  dragStartElementPos.x = fabPosition.x
+  dragStartElementPos.y = fabPosition.y
+
+  document.addEventListener('mousemove', handleDragFab)
+  document.addEventListener('mouseup', stopDragFab)
+}
+
+function handleDragFab(e) {
+  if (!isDraggingFab.value) return
+  const deltaX = dragStartPos.x - e.clientX
+  const deltaY = dragStartPos.y - e.clientY
+  fabDragDistance.value = Math.max(fabDragDistance.value, Math.abs(deltaX), Math.abs(deltaY))
+  fabPosition.x = Math.max(0, dragStartElementPos.x + deltaX)
+  fabPosition.y = Math.max(0, dragStartElementPos.y + deltaY)
+}
+
+function stopDragFab() {
+  isDraggingFab.value = false
+  document.removeEventListener('mousemove', handleDragFab)
+  document.removeEventListener('mouseup', stopDragFab)
+
+  // 保存位置到localStorage
+  savePositions()
+}
+
+// FAB触摸拖动处理（移动端）
+function startDragFabTouch(e) {
+  const touch = e.touches[0]
+  fabDragDistance.value = 0
+  isDraggingFab.value = true
+  dragStartPos.x = touch.clientX
+  dragStartPos.y = touch.clientY
+  dragStartElementPos.x = fabPosition.x
+  dragStartElementPos.y = fabPosition.y
+
+  document.addEventListener('touchmove', handleDragFabTouch, { passive: false })
+  document.addEventListener('touchend', stopDragFabTouch)
+}
+
+function handleDragFabTouch(e) {
+  if (!isDraggingFab.value) return
+  e.preventDefault()
+  const touch = e.touches[0]
+  const deltaX = dragStartPos.x - touch.clientX
+  const deltaY = dragStartPos.y - touch.clientY
+  fabPosition.x = Math.max(0, dragStartElementPos.x + deltaX)
+  fabPosition.y = Math.max(0, dragStartElementPos.y + deltaY)
+}
+
+function stopDragFabTouch() {
+  isDraggingFab.value = false
+  document.removeEventListener('touchmove', handleDragFabTouch)
+  document.removeEventListener('touchend', stopDragFabTouch)
+  savePositions()
+}
+
+// 面板拖动处理
+function startDragPanel(e) {
+  if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return
+  e.preventDefault()
+  isDraggingPanel.value = true
+  dragStartPos.x = e.clientX
+  dragStartPos.y = e.clientY
+  dragStartElementPos.x = panelPosition.x
+  dragStartElementPos.y = panelPosition.y
+
+  document.addEventListener('mousemove', handleDragPanel)
+  document.addEventListener('mouseup', stopDragPanel)
+}
+
+function handleDragPanel(e) {
+  if (!isDraggingPanel.value) return
+  const deltaX = e.clientX - dragStartPos.x
+  const deltaY = e.clientY - dragStartPos.y
+  panelPosition.x = dragStartElementPos.x + deltaX
+  panelPosition.y = dragStartElementPos.y + deltaY
+}
+
+function stopDragPanel() {
+  isDraggingPanel.value = false
+  document.removeEventListener('mousemove', handleDragPanel)
+  document.removeEventListener('mouseup', stopDragPanel)
+  savePositions()
+}
+
+// 保存和加载位置
+function savePositions() {
+  localStorage.setItem('ai_assistant_fab_position', JSON.stringify(fabPosition))
+  localStorage.setItem('ai_assistant_panel_position', JSON.stringify(panelPosition))
+}
+
+function loadPositions() {
+  try {
+    const savedFab = localStorage.getItem('ai_assistant_fab_position')
+    const savedPanel = localStorage.getItem('ai_assistant_panel_position')
+    if (savedFab) Object.assign(fabPosition, JSON.parse(savedFab))
+    if (savedPanel) Object.assign(panelPosition, JSON.parse(savedPanel))
+  } catch {
+    // ignore
+  }
+}
+
 const visible = computed(() => {
   const hasToken = Boolean(getToken())
   const hasUser = Boolean(authStore.user)
@@ -145,8 +276,11 @@ watch(messages, async () => {
   }
 }, { deep: true })
 
-function toggle() {
-  open.value = !open.value
+function toggleFab() {
+  // 拖动距离小于 5px 视为点击，否则忽略
+  if (fabDragDistance.value < 5) {
+    open.value = !open.value
+  }
 }
 
 function usePrompt(text) {
@@ -273,15 +407,15 @@ function jumpTo(path) {
 onMounted(() => {
   resetMessages()
   loadSessions()
+  loadPositions()
 })
 </script>
 
 <style scoped>
 .ai-assistant {
   position: fixed;
-  right: 28px;
-  bottom: 24px;
   z-index: 5000;
+  transition: none;
 }
 
 .ai-assistant-panel {
@@ -292,6 +426,7 @@ onMounted(() => {
   background: linear-gradient(180deg, rgba(247, 250, 255, 0.98), rgba(255, 255, 255, 0.98));
   box-shadow: 0 22px 48px rgba(20, 41, 78, 0.16);
   overflow: hidden;
+  cursor: move;
 }
 
 .ai-assistant-header {
@@ -300,6 +435,12 @@ onMounted(() => {
   align-items: flex-start;
   padding: 16px 18px 12px;
   border-bottom: 1px solid rgba(22, 67, 112, 0.08);
+  cursor: grab;
+  user-select: none;
+}
+
+.ai-assistant-header:active {
+  cursor: grabbing;
 }
 
 .ai-assistant-header strong {
@@ -510,7 +651,18 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.1s;
+}
+
+.ai-assistant-fab:hover {
+  transform: scale(1.05);
+}
+
+.ai-assistant-fab:active {
+  cursor: grabbing;
+  transform: scale(0.95);
 }
 
 .ai-assistant-fab span {
