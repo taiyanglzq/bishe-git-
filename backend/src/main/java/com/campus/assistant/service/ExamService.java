@@ -74,4 +74,9 @@ public interface ExamService {
      * 获取当前用户的座位信息（用于学生端显示）
      */
     List<ExamSeat> mySeats();
+
+    /**
+     * 获取所有教师姓名列表（用于监考老师选择）
+     */
+    List<String> getAllTeacherNames();
 }

@@ -31,6 +31,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -94,6 +95,7 @@ public class ExamServiceImpl implements ExamService {
     public Long save(ExamSaveDTO dto) {
         RoleUtils.requireAny("TEACHER", "ADMIN");
         validateExamTime(dto);
+        validateInvigilators(dto.getInvigilator());
         Exam exam = new Exam();
         exam.setCourseId(dto.getCourseId());
         exam.setCourseName(dto.getCourseName());
@@ -124,6 +126,7 @@ public class ExamServiceImpl implements ExamService {
     public void update(ExamSaveDTO dto) {
         RoleUtils.requireAny("TEACHER", "ADMIN");
         validateExamTime(dto);
+        validateInvigilators(dto.getInvigilator());
         Exam exam = examMapper.selectById(dto.getId());
         if (exam == null || exam.getDeleted() == 1) {
             throw new BusinessException(404, "考试安排不存在");
@@ -284,6 +287,20 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    public List<String> getAllTeacherNames() {
+        return userMapper.selectList(new LambdaQueryWrapper<User>()
+                        .eq(User::getRoleCode, "TEACHER")
+                        .eq(User::getStatus, 1)
+                        .eq(User::getDeleted, 0))
+                .stream()
+                .map(User::getRealName)
+                .filter(name -> name != null && !name.isBlank())
+                .distinct()
+                .sorted()
+                .toList();
+    }
+
+    @Override
     public List<ExamSeat> mySeats() {
         Long userId = UserContext.getUserId();
         if (userId == null) return List.of();
@@ -426,6 +443,20 @@ public class ExamServiceImpl implements ExamService {
             }
         } catch (Exception e) {
             // 延迟任务投递失败不影响考试创建
+        }
+    }
+
+    private void validateInvigilators(String invigilator) {
+        if (invigilator == null || invigilator.isBlank()) return;
+        java.util.Set<String> validNames = new HashSet<>(getAllTeacherNames());
+        String[] names = invigilator.split("[,，]");
+        for (String name : names) {
+            String cleanName = name.trim().replace("老师", "").trim();
+            if (cleanName.isBlank()) continue;
+            if (!validNames.contains(cleanName)) {
+                throw new BusinessException(400,
+                        "监考老师「" + cleanName + "」不存在或不是教师账号，请先创建教师账号");
+            }
         }
     }
 

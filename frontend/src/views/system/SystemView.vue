@@ -224,7 +224,9 @@
               <el-input v-model="examForm.startTime" placeholder="开始时间 (09:00)" style="width: 130px;" />
               <el-input v-model="examForm.endTime" placeholder="结束时间 (11:00)" style="width: 130px;" />
               <el-input v-model="examForm.location" placeholder="考试地点" style="width: 160px;" />
-              <el-input v-model="examForm.invigilator" placeholder="监考老师（逗号分隔）" style="width: 200px;" />
+              <el-select v-model="examForm.invigilator" multiple filterable placeholder="选择监考老师" style="width: 240px;">
+                <el-option v-for="t in teacherOptions" :key="t" :label="t" :value="t" />
+              </el-select>
               <el-select v-model="examForm.examType" placeholder="考试类型" style="width: 120px;">
                 <el-option label="期末考试" value="期末考试" />
                 <el-option label="期中考试" value="期中考试" />
@@ -322,7 +324,7 @@ import { AlarmClock, UserFilled, ChatLineSquare, Collection, Search } from '@ele
 import { useAuthStore } from '../../stores/auth'
 import { createUser, deleteUser, getUserPage, updateUser } from '../../api/auth'
 import { createBook, deleteBook, getBookManagePage, getBorrowPage, updateBook } from '../../api/book'
-import { createExam, deleteExam, getExamManagePage, getExamSeats, generateExamSeats, saveExamSeats, getExamSeatsExportUrl, updateExam, updateExamSeat } from '../../api/course'
+import { createExam, deleteExam, getExamManagePage, getExamSeats, generateExamSeats, saveExamSeats, getExamSeatsExportUrl, getExamTeachers, updateExam, updateExamSeat } from '../../api/course'
 import { approveNotice, createNotice, deleteNotice, getNoticeManagePage, rejectNotice, updateNotice } from '../../api/notice'
 import { uploadImage } from '../../api/upload'
 
@@ -362,8 +364,9 @@ const bookSubTab = ref('book-list')
 // 考试管理
 const exams = ref([])
 const examPage = reactive({ current: 1, total: 0 })
-const examForm = reactive({ id: null, courseId: null, courseName: '', examDate: '', startTime: '', endTime: '', location: '', invigilator: '', examType: '期末考试', college: '计算机学院', status: 1 })
+const examForm = reactive({ id: null, courseId: null, courseName: '', examDate: '', startTime: '', endTime: '', location: '', invigilator: [], examType: '期末考试', college: '计算机学院', status: 1 })
 const examSubTab = ref('exam-list')
+const teacherOptions = ref([])
 const currentExamId = ref(null)
 const currentExamName = ref('')
 const seats = ref([])
@@ -515,7 +518,11 @@ async function loadExams() {
 
 async function submitExam() {
   if (!examForm.courseName.trim()) { ElMessage.warning('请填写考试科目'); return }
-  await (examForm.id ? updateExam(examForm) : createExam(examForm))
+  const payload = { ...examForm }
+  if (Array.isArray(payload.invigilator)) {
+    payload.invigilator = payload.invigilator.join('、')
+  }
+  await (examForm.id ? updateExam(payload) : createExam(payload))
   ElMessage.success(examForm.id ? '考试更新成功' : '考试新增成功')
   resetExamForm(); await loadExams()
 }
@@ -523,14 +530,15 @@ async function submitExam() {
 async function removeExam(id) { if (!await confirmDelete('考试')) return; await deleteExam(id); ElMessage.success('考试已删除'); resetExamForm(); await loadExams() }
 
 function editExam(row) {
+  const inv = row.invigilator ? row.invigilator.split(/[,，、]/).filter(Boolean) : []
   Object.assign(examForm, {
     id: row.id, courseId: row.courseId, courseName: row.courseName,
     examDate: row.examDate, startTime: row.startTime, endTime: row.endTime,
-    location: row.location || '', invigilator: row.invigilator || '',
+    location: row.location || '', invigilator: inv,
     examType: row.examType, college: row.college || '计算机学院', status: row.status ?? 1
   })
 }
-function resetExamForm() { Object.assign(examForm, { id: null, courseId: null, courseName: '', examDate: '', startTime: '', endTime: '', location: '', invigilator: '', examType: '期末考试', college: '计算机学院', status: 1 }) }
+function resetExamForm() { Object.assign(examForm, { id: null, courseId: null, courseName: '', examDate: '', startTime: '', endTime: '', location: '', invigilator: [], examType: '期末考试', college: '计算机学院', status: 1 }) }
 
 function showSeat(row) {
   currentExamId.value = row.id
@@ -583,5 +591,10 @@ function exportSeats() {
 onMounted(() => {
   if (isAdmin.value) activeTab.value = 'user'
   loadAll().catch(() => {})
+  loadExamTeachers()
 })
+
+async function loadExamTeachers() {
+  try { teacherOptions.value = await getExamTeachers() || [] } catch { teacherOptions.value = [] }
+}
 </script>

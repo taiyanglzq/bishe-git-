@@ -73,3 +73,7 @@ export function getExamSeatsExportUrl(examId) {
 export function getMyExamSeats() {
   return request.get('/exam/seats/my')
 }
+
+export function getExamTeachers() {
+  return request.get('/exam/teachers')
+}

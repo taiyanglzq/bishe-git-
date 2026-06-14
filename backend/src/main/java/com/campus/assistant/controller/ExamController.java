@@ -97,6 +97,11 @@ public class ExamController {
         return Result.success();
     }
 
+    @GetMapping("/teachers")
+    public Result<List<String>> teachers() {
+        return Result.success(examService.getAllTeacherNames());
+    }
+
     @GetMapping("/seats/my")
     public Result<List<ExamSeat>> mySeats() {
         return Result.success(examService.mySeats());
