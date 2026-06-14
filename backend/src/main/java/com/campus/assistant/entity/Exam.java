@@ -63,6 +63,11 @@ public class Exam {
     private String examType;
 
     /**
+     * 监考老师，多个用逗号分隔，如"张老师,李老师"
+     */
+    private String invigilator;
+
+    /**
      * 所属院系
      */
     private String college;

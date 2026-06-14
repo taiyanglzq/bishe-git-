@@ -76,6 +76,10 @@
               <el-icon><OfficeBuilding /></el-icon>
               <span>{{ item.college }}</span>
             </div>
+            <div v-if="item.invigilator" class="exam-info-item">
+              <el-icon><UserFilled /></el-icon>
+              <span>监考：{{ item.invigilator }}</span>
+            </div>
             <div v-if="item.seatNo" class="exam-info-item">
               <el-icon><Tickets /></el-icon>
               <span>座位号：{{ item.seatNo }}</span>
@@ -113,7 +117,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getExamPage } from '../../api/course'
-import { Search, Refresh, Clock, Location, OfficeBuilding, Tickets, Document } from '@element-plus/icons-vue'
+import { Search, Refresh, Clock, Location, OfficeBuilding, Tickets, UserFilled, Document } from '@element-plus/icons-vue'
 
 const PAGE_SIZE = 10
 

@@ -200,6 +200,98 @@
             </div>
           </el-tab-pane>
         </el-tabs>
+      <el-tab-pane name="exam">
+        <template #label><span class="tab-label"><el-icon><AlarmClock /></el-icon> 考试管理</span></template>
+        <el-tabs v-model="examSubTab">
+          <el-tab-pane name="exam-list">
+            <template #label><span class="tab-label">考试列表</span></template>
+            <div class="mgmt-form-row">
+              <el-input v-model="examForm.courseName" placeholder="考试科目" style="width: 200px;" />
+              <el-date-picker v-model="examForm.examDate" value-format="YYYY-MM-DD" placeholder="考试日期" style="width: 150px;" />
+              <el-time-picker v-model="examForm.startTime" placeholder="开始时间" style="width: 130px;" />
+              <el-time-picker v-model="examForm.endTime" placeholder="结束时间" style="width: 130px;" />
+              <el-input v-model="examForm.location" placeholder="考试地点" style="width: 160px;" />
+              <el-input v-model="examForm.invigilator" placeholder="监考老师（逗号分隔）" style="width: 200px;" />
+              <el-select v-model="examForm.examType" placeholder="考试类型" style="width: 120px;">
+                <el-option label="期末考试" value="期末考试" />
+                <el-option label="期中考试" value="期中考试" />
+                <el-option label="补考" value="补考" />
+              </el-select>
+              <el-select v-model="examForm.college" placeholder="院系" style="width: 130px;">
+                <el-option label="计算机学院" value="计算机学院" />
+                <el-option label="外国语学院" value="外国语学院" />
+                <el-option label="数学学院" value="数学学院" />
+              </el-select>
+              <el-button type="primary" @click="submitExam">{{ examForm.id ? '更新' : '新增' }}</el-button>
+              <el-button @click="resetExamForm">清空</el-button>
+              <el-button @click="loadExams">刷新</el-button>
+            </div>
+            <div class="panel-card" style="margin-top: 12px;">
+              <div class="panel-card-body" style="padding: 0;">
+                <el-table :data="exams" border style="border: none;">
+                  <el-table-column prop="courseName" label="考试科目" min-width="140" show-overflow-tooltip />
+                  <el-table-column label="日期" width="110">
+                    <template #default="{ row }">{{ row.examDate }}</template>
+                  </el-table-column>
+                  <el-table-column label="时间" width="160">
+                    <template #default="{ row }">{{ row.startTime }}-{{ row.endTime }}</template>
+                  </el-table-column>
+                  <el-table-column prop="location" label="地点" width="120" />
+                  <el-table-column prop="invigilator" label="监考老师" width="150" />
+                  <el-table-column label="操作" min-width="200">
+                    <template #default="{ row }">
+                      <el-button size="small" text type="primary" @click="editExam(row)">编辑</el-button>
+                      <el-button size="small" text type="danger" @click="removeExam(row.id)">删除</el-button>
+                      <el-button size="small" text type="success" @click="showSeat(row)">座位</el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
+                <el-pagination
+                  class="mgmt-pagination"
+                  layout="prev, pager, next, total"
+                  :current-page="examPage.current"
+                  :page-size="PAGE_SIZE"
+                  :total="examPage.total"
+                  @current-change="changeExamPage"
+                />
+              </div>
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane name="seat-manage">
+            <template #label><span class="tab-label">座位管理</span></template>
+            <div v-if="currentExamId" class="mgmt-form-row">
+              <span style="font-size:14px;font-weight:600;">{{ currentExamName }} — 座位安排</span>
+              <el-select v-model="seatMode" placeholder="生成模式" style="width: 160px;">
+                <el-option label="按教室行列（A1,B1...）" value="CLASSROOM" />
+                <el-option label="按学号排序" value="STUDENT_NO" />
+                <el-option label="随机分配" value="RANDOM" />
+              </el-select>
+              <el-button type="primary" @click="handleGenerateSeats">生成座位</el-button>
+              <el-button :disabled="!seats.length" @click="exportSeats">导出座位表</el-button>
+              <el-button @click="backToExamList">返回</el-button>
+            </div>
+            <div v-if="currentExamId" class="panel-card" style="margin-top: 12px;">
+              <div class="panel-card-body" style="padding: 0;">
+                <el-table :data="seats" border style="border: none;">
+                  <el-table-column type="index" label="序号" width="60" />
+                  <el-table-column prop="studentNo" label="学号" width="140" />
+                  <el-table-column prop="studentName" label="姓名" width="100" />
+                  <el-table-column prop="college" label="院系" width="120" />
+                  <el-table-column label="座位号" width="120">
+                    <template #default="{ row, $index }">
+                      <el-input v-model="row.seatNo" size="small" style="width:90px;" @blur="handleUpdateSeat(row)" />
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </div>
+            </div>
+            <div v-else class="empty-state">
+              <p>请从考试列表中选择一场考试进行座位管理</p>
+            </div>
+          </el-tab-pane>
+        </el-tabs>
+      </el-tab-pane>
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -208,10 +300,11 @@
 <script setup>
 import { computed, defineComponent, h, onMounted, reactive, ref } from 'vue'
 import { ElButton, ElMessage, ElMessageBox, ElUpload } from 'element-plus'
-import { UserFilled, ChatLineSquare, Collection, Search } from '@element-plus/icons-vue'
+import { AlarmClock, UserFilled, ChatLineSquare, Collection, Search } from '@element-plus/icons-vue'
 import { useAuthStore } from '../../stores/auth'
 import { createUser, deleteUser, getUserPage, updateUser } from '../../api/auth'
 import { createBook, deleteBook, getBookManagePage, getBorrowPage, updateBook } from '../../api/book'
+import { createExam, deleteExam, getExamManagePage, getExamSeats, generateExamSeats, getExamSeatsExportUrl, updateExam, updateExamSeat } from '../../api/course'
 import { approveNotice, createNotice, deleteNotice, getNoticeManagePage, rejectNotice, updateNotice } from '../../api/notice'
 import { uploadImage } from '../../api/upload'
 
@@ -248,6 +341,16 @@ const borrowPageInfo = reactive({ current: 1, total: 0 })
 const borrowKeyword = ref('')
 const bookSubTab = ref('book-list')
 
+// 考试管理
+const exams = ref([])
+const examPage = reactive({ current: 1, total: 0 })
+const examForm = reactive({ id: null, courseId: null, courseName: '', examDate: '', startTime: '', endTime: '', location: '', invigilator: '', examType: '期末考试', college: '计算机学院', status: 1 })
+const examSubTab = ref('exam-list')
+const currentExamId = ref(null)
+const currentExamName = ref('')
+const seats = ref([])
+const seatMode = ref('CLASSROOM')
+
 const userForm = reactive({ id: null, loginNo: '', realName: '', college: '计算机学院', roleCode: 'STUDENT', password: '123456', status: 1 })
 const noticeForm = reactive({ id: null, title: '', category: '系统通知', content: '', scopeType: 'COLLEGE', scopeCollege: '计算机学院', status: 1 })
 const bookForm = reactive({ id: null, title: '', author: '', isbn: '', publisher: '', publishYear: '', category: '计算机科学', location: '', totalCount: 1, availableCount: 1, description: '', coverUrl: '', status: 1 })
@@ -281,7 +384,7 @@ function changeBorrowPage(p) { borrowPageInfo.current = p; loadBorrows() }
 
 async function loadAll() {
   if (!isAdmin.value && activeTab.value === 'user') activeTab.value = 'notice'
-  const tasks = [loadNotices()]
+  const tasks = [loadNotices(), loadExams()]
   if (isAdmin.value) tasks.push(loadUsers(), loadBooks(), loadBorrows())
   await Promise.all(tasks)
 }
@@ -361,6 +464,68 @@ function formatTime(time) {
   if (Number.isNaN(d.getTime())) return time
   const pad = (n) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+// ===== 考试管理 =====
+function changeExamPage(p) { examPage.current = p; loadExams() }
+
+async function loadExams() {
+  const data = await getExamManagePage({ current: examPage.current, size: PAGE_SIZE })
+  exams.value = data.records || []
+  examPage.total = data.total || 0
+}
+
+async function submitExam() {
+  if (!examForm.courseName.trim()) { ElMessage.warning('请填写考试科目'); return }
+  await (examForm.id ? updateExam(examForm) : createExam(examForm))
+  ElMessage.success(examForm.id ? '考试更新成功' : '考试新增成功')
+  resetExamForm(); await loadExams()
+}
+
+async function removeExam(id) { if (!await confirmDelete('考试')) return; await deleteExam(id); ElMessage.success('考试已删除'); resetExamForm(); await loadExams() }
+
+function editExam(row) {
+  Object.assign(examForm, {
+    id: row.id, courseId: row.courseId, courseName: row.courseName,
+    examDate: row.examDate, startTime: row.startTime, endTime: row.endTime,
+    location: row.location || '', invigilator: row.invigilator || '',
+    examType: row.examType, college: row.college || '计算机学院', status: row.status ?? 1
+  })
+}
+function resetExamForm() { Object.assign(examForm, { id: null, courseId: null, courseName: '', examDate: '', startTime: '', endTime: '', location: '', invigilator: '', examType: '期末考试', college: '计算机学院', status: 1 }) }
+
+function showSeat(row) {
+  currentExamId.value = row.id
+  currentExamName.value = row.courseName
+  loadSeats(row.id)
+  examSubTab.value = 'seat-manage'
+}
+
+function backToExamList() { currentExamId.value = null; examSubTab.value = 'exam-list' }
+
+async function loadSeats(examId) {
+  try {
+    const data = await getExamSeats(examId)
+    seats.value = Array.isArray(data) ? data : []
+  } catch { seats.value = [] }
+}
+
+async function handleGenerateSeats() {
+  if (!currentExamId.value) return
+  await generateExamSeats(currentExamId.value, { mode: seatMode.value })
+  ElMessage.success('座位生成成功')
+  await loadSeats(currentExamId.value)
+}
+
+async function handleUpdateSeat(row) {
+  if (!row.id || !row.seatNo) return
+  await updateExamSeat(row.id, row.seatNo)
+}
+
+function exportSeats() {
+  if (!currentExamId.value) return
+  const url = getExamSeatsExportUrl(currentExamId.value)
+  window.open(url, '_blank')
 }
 
 onMounted(() => {

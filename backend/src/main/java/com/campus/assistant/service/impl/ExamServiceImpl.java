@@ -7,25 +7,34 @@ import com.campus.assistant.common.exception.BusinessException;
 import com.campus.assistant.common.utils.RoleUtils;
 import com.campus.assistant.common.utils.UserContext;
 import com.campus.assistant.dto.ExamSaveDTO;
+import com.campus.assistant.dto.ExamSeatGenerateDTO;
 import com.campus.assistant.entity.Exam;
+import com.campus.assistant.entity.ExamSeat;
 import com.campus.assistant.entity.User;
 import com.campus.assistant.mapper.ExamMapper;
+import com.campus.assistant.mapper.ExamSeatMapper;
 import com.campus.assistant.mapper.UserMapper;
 import com.campus.assistant.service.DelayTaskService;
 import com.campus.assistant.service.ExamService;
 import com.campus.assistant.service.NotificationService;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
- * 考试服务实现，负责考试分页、详情、后台管理以及考试通知和考前提醒。
+ * 考试服务实现，负责考试分页、详情、后台管理、座位安排以及考试通知和考前提醒。
  */
 @Service
 @RequiredArgsConstructor
@@ -33,6 +42,7 @@ public class ExamServiceImpl implements ExamService {
 
     private final ExamMapper examMapper;
     private final UserMapper userMapper;
+    private final ExamSeatMapper examSeatMapper;
     private final NotificationService notificationService;
     private final DelayTaskService delayTaskService;
 
@@ -92,6 +102,7 @@ public class ExamServiceImpl implements ExamService {
         exam.setEndTime(dto.getEndTime());
         exam.setLocation(dto.getLocation());
         exam.setSeatNo(dto.getSeatNo());
+        exam.setInvigilator(dto.getInvigilator());
         exam.setExamType(dto.getExamType());
         exam.setCollege(dto.getCollege());
         exam.setStatus(dto.getStatus() == null ? 1 : dto.getStatus());
@@ -124,6 +135,7 @@ public class ExamServiceImpl implements ExamService {
         exam.setEndTime(dto.getEndTime());
         exam.setLocation(dto.getLocation());
         exam.setSeatNo(dto.getSeatNo());
+        exam.setInvigilator(dto.getInvigilator());
         exam.setExamType(dto.getExamType());
         exam.setCollege(dto.getCollege());
         exam.setStatus(dto.getStatus() == null ? exam.getStatus() : dto.getStatus());
@@ -140,7 +152,185 @@ public class ExamServiceImpl implements ExamService {
                     .eq(Exam::getId, id)
                     .set(Exam::getDeleted, 1)
                     .set(Exam::getUpdateTime, LocalDateTime.now()));
+            // 一并删除座位
+            examSeatMapper.update(null, new LambdaUpdateWrapper<ExamSeat>()
+                    .eq(ExamSeat::getExamId, id)
+                    .set(ExamSeat::getDeleted, 1));
         }
+    }
+
+    // ========== 座位管理 ==========
+
+    @Override
+    public List<ExamSeat> getSeats(Long examId) {
+        RoleUtils.requireAny("TEACHER", "ADMIN");
+        return examSeatMapper.selectList(new LambdaQueryWrapper<ExamSeat>()
+                .eq(ExamSeat::getExamId, examId)
+                .eq(ExamSeat::getDeleted, 0)
+                .orderByAsc(ExamSeat::getSeatNo));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void generateSeats(ExamSeatGenerateDTO dto) {
+        RoleUtils.requireAny("ADMIN");
+        Exam exam = examMapper.selectById(dto.getExamId());
+        if (exam == null || exam.getDeleted() == 1) {
+            throw new BusinessException(404, "考试不存在");
+        }
+        // 删除旧座位
+        examSeatMapper.update(null, new LambdaUpdateWrapper<ExamSeat>()
+                .eq(ExamSeat::getExamId, dto.getExamId())
+                .set(ExamSeat::getDeleted, 1));
+
+        // 获取同院系学生
+        List<User> students = userMapper.selectList(new LambdaQueryWrapper<User>()
+                .eq(User::getCollege, exam.getCollege())
+                .eq(User::getRoleCode, "STUDENT")
+                .eq(User::getStatus, 1)
+                .eq(User::getDeleted, 0));
+        if (students.isEmpty()) {
+            throw new BusinessException(409, "该院系没有学生");
+        }
+
+        List<ExamSeat> seats;
+        switch (dto.getMode()) {
+            case "STUDENT_NO":
+                students.sort((a, b) -> {
+                    String snoA = a.getStudentNo() == null ? "" : a.getStudentNo();
+                    String snoB = b.getStudentNo() == null ? "" : b.getStudentNo();
+                    return snoA.compareTo(snoB);
+                });
+                seats = assignSequential(dto.getExamId(), students);
+                break;
+            case "RANDOM":
+                Collections.shuffle(students);
+                seats = assignSequential(dto.getExamId(), students);
+                break;
+            default: // CLASSROOM
+                seats = assignClassroom(dto.getExamId(), students);
+                break;
+        }
+
+        for (ExamSeat seat : seats) {
+            examSeatMapper.insert(seat);
+        }
+    }
+
+    private List<ExamSeat> assignSequential(Long examId, List<User> students) {
+        List<ExamSeat> seats = new ArrayList<>();
+        for (int i = 0; i < students.size(); i++) {
+            User s = students.get(i);
+            ExamSeat seat = new ExamSeat();
+            seat.setExamId(examId);
+            seat.setStudentId(s.getId());
+            seat.setStudentName(s.getRealName());
+            seat.setStudentNo(s.getStudentNo());
+            seat.setSeatNo(String.valueOf(i + 1));
+            seat.setCollege(s.getCollege());
+            seat.setDeleted(0);
+            seat.setCreateTime(LocalDateTime.now());
+            seat.setUpdateTime(LocalDateTime.now());
+            seats.add(seat);
+        }
+        return seats;
+    }
+
+    private List<ExamSeat> assignClassroom(Long examId, List<User> students) {
+        List<ExamSeat> seats = new ArrayList<>();
+        int cols = 10;
+        for (int i = 0; i < students.size(); i++) {
+            User s = students.get(i);
+            int row = i / cols;
+            int col = i % cols;
+            char rowLetter = (char) ('A' + row);
+            String seatNo = String.format("%c%d", rowLetter, col + 1);
+            ExamSeat seat = new ExamSeat();
+            seat.setExamId(examId);
+            seat.setStudentId(s.getId());
+            seat.setStudentName(s.getRealName());
+            seat.setStudentNo(s.getStudentNo());
+            seat.setSeatNo(seatNo);
+            seat.setCollege(s.getCollege());
+            seat.setDeleted(0);
+            seat.setCreateTime(LocalDateTime.now());
+            seat.setUpdateTime(LocalDateTime.now());
+            seats.add(seat);
+        }
+        return seats;
+    }
+
+    @Override
+    public void updateSeat(Long seatId, String seatNo) {
+        RoleUtils.requireAny("ADMIN");
+        ExamSeat seat = examSeatMapper.selectById(seatId);
+        if (seat == null || seat.getDeleted() == 1) {
+            throw new BusinessException(404, "座位记录不存在");
+        }
+        seat.setSeatNo(seatNo);
+        seat.setUpdateTime(LocalDateTime.now());
+        examSeatMapper.updateById(seat);
+    }
+
+    @Override
+    public byte[] exportSeats(Long examId) {
+        RoleUtils.requireAny("TEACHER", "ADMIN");
+        Exam exam = examMapper.selectById(examId);
+        if (exam == null) {
+            throw new BusinessException(404, "考试不存在");
+        }
+        List<ExamSeat> seats = getSeats(examId);
+
+        SXSSFWorkbook wb = new SXSSFWorkbook(100);
+        Sheet sheet = wb.createSheet("考场座位表");
+
+        // 标题行
+        Row titleRow = sheet.createRow(0);
+        Cell titleCell = titleRow.createCell(0);
+        titleCell.setCellValue(exam.getCourseName() + " 考场座位表（" + exam.getExamDate() + " " + exam.getStartTime() + "-" + exam.getEndTime() + "）");
+        titleCell.setCellStyle(boldStyle(wb));
+
+        // 表头
+        String[] headers = {"序号", "学号", "姓名", "院系", "座位号"};
+        Row headerRow = sheet.createRow(1);
+        for (int i = 0; i < headers.length; i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(headers[i]);
+            cell.setCellStyle(boldStyle(wb));
+        }
+
+        // 数据行
+        for (int i = 0; i < seats.size(); i++) {
+            ExamSeat s = seats.get(i);
+            Row row = sheet.createRow(i + 2);
+            row.createCell(0).setCellValue(i + 1);
+            row.createCell(1).setCellValue(s.getStudentNo() == null ? "" : s.getStudentNo());
+            row.createCell(2).setCellValue(s.getStudentName() == null ? "" : s.getStudentName());
+            row.createCell(3).setCellValue(s.getCollege() == null ? "" : s.getCollege());
+            row.createCell(4).setCellValue(s.getSeatNo() == null ? "" : s.getSeatNo());
+        }
+
+        // 自动列宽
+        for (int i = 0; i < headers.length; i++) {
+            sheet.autoSizeColumn(i);
+        }
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            wb.write(out);
+            wb.dispose();
+        } catch (Exception e) {
+            throw new BusinessException(500, "导出座位表失败：" + e.getMessage());
+        }
+        return out.toByteArray();
+    }
+
+    private CellStyle boldStyle(Workbook wb) {
+        CellStyle style = wb.createCellStyle();
+        Font font = wb.createFont();
+        font.setBold(true);
+        style.setFont(font);
+        return style;
     }
 
     /**
@@ -160,6 +350,7 @@ public class ExamServiceImpl implements ExamService {
             String content = exam.getCourseName() + " " + exam.getExamType()
                     + " 将于 " + exam.getExamDate() + " " + exam.getStartTime() + "-" + exam.getEndTime()
                     + " 在 " + (exam.getLocation() != null ? exam.getLocation() : "待定") + " 举行。"
+                    + (exam.getInvigilator() != null ? "监考老师：" + exam.getInvigilator() : "")
                     + (exam.getSeatNo() != null ? "座位号：" + exam.getSeatNo() : "");
             for (User student : students) {
                 notificationService.send(student.getId(), title, content, "EXAM", exam.getId());

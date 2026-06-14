@@ -196,6 +196,7 @@ CREATE TABLE ca_exam (
   end_time TIME NOT NULL COMMENT '结束时间',
   location VARCHAR(128) COMMENT '考试地点',
   seat_no VARCHAR(32) COMMENT '座位号',
+  invigilator VARCHAR(128) COMMENT '监考老师，逗号分隔',
   exam_type VARCHAR(32) NOT NULL DEFAULT '期末考试' COMMENT '考试类型：期末考试/期中考试/补考',
   college VARCHAR(64) COMMENT '所属院系，用于按院系筛选',
   status TINYINT NOT NULL DEFAULT 1,
@@ -205,6 +206,22 @@ CREATE TABLE ca_exam (
   KEY idx_exam_course (course_id),
   KEY idx_exam_date (exam_date),
   KEY idx_exam_college (college)
+);
+
+DROP TABLE IF EXISTS ca_exam_seat;
+CREATE TABLE ca_exam_seat (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  exam_id BIGINT NOT NULL COMMENT '考试ID',
+  student_id BIGINT NOT NULL COMMENT '学生ID',
+  student_name VARCHAR(64) COMMENT '学生姓名',
+  student_no VARCHAR(64) COMMENT '学号',
+  seat_no VARCHAR(32) COMMENT '座位号',
+  college VARCHAR(64) COMMENT '所属院系',
+  deleted TINYINT NOT NULL DEFAULT 0,
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_exam_seat_exam (exam_id),
+  KEY idx_exam_seat_student (student_id)
 );
 
 DROP TABLE IF EXISTS ca_discussion_user_ban;

@@ -2,10 +2,14 @@ package com.campus.assistant.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.campus.assistant.dto.ExamSaveDTO;
+import com.campus.assistant.dto.ExamSeatGenerateDTO;
 import com.campus.assistant.entity.Exam;
+import com.campus.assistant.entity.ExamSeat;
+
+import java.util.List;
 
 /**
- * 考试服务接口，定义考试查询和后台管理相关业务能力。
+ * 考试服务接口，定义考试查询、后台管理和座位安排相关业务能力。
  */
 public interface ExamService {
 
@@ -38,4 +42,26 @@ public interface ExamService {
      * 删除考试
      */
     void delete(Long id);
+
+    // ========== 座位管理 ==========
+
+    /**
+     * 查询考试座位列表
+     */
+    List<ExamSeat> getSeats(Long examId);
+
+    /**
+     * 生成座位
+     */
+    void generateSeats(ExamSeatGenerateDTO dto);
+
+    /**
+     * 更新单个座位号
+     */
+    void updateSeat(Long seatId, String seatNo);
+
+    /**
+     * 导出座位表 Excel
+     */
+    byte[] exportSeats(Long examId);
 }

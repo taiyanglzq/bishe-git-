@@ -38,5 +38,7 @@ public class ExamSaveDTO {
 
     private String college;
 
+    private String invigilator;
+
     private Integer status;
 }

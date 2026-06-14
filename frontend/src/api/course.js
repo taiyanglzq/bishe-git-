@@ -48,3 +48,20 @@ export function updateExam(data) {
 export function deleteExam(id) {
   return request.delete(`/exam/${id}`)
 }
+
+// ====== 座位管理 ======
+export function getExamSeats(examId) {
+  return request.get(`/exam/${examId}/seats`)
+}
+
+export function generateExamSeats(examId, data) {
+  return request.post(`/exam/${examId}/seats/generate`, data)
+}
+
+export function updateExamSeat(seatId, seatNo) {
+  return request.put(`/exam/seats/${seatId}?seatNo=${encodeURIComponent(seatNo)}`)
+}
+
+export function getExamSeatsExportUrl(examId) {
+  return `/exam/${examId}/seats/export`
+}
