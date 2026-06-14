@@ -355,6 +355,56 @@
           </el-tab-pane>
         </el-tabs>
       </el-tab-pane>
+      <el-tab-pane name="course">
+        <template #label><span class="tab-label"><el-icon><Reading /></el-icon> 课程管理</span></template>
+        <div class="mgmt-form-row">
+          <el-input v-model="courseForm.name" placeholder="课程名称" style="width: 200px;" />
+          <el-input v-model="courseForm.teacherName" placeholder="授课教师" style="width: 130px;" />
+          <el-select v-model="courseForm.college" placeholder="院系" style="width: 130px;">
+            <el-option label="计算机学院" value="计算机学院" />
+            <el-option label="外国语学院" value="外国语学院" />
+            <el-option label="数学学院" value="数学学院" />
+          </el-select>
+          <el-input v-model="courseForm.semester" placeholder="学期" style="width: 140px;" />
+          <el-input v-model="courseForm.classroom" placeholder="教室" style="width: 140px;" />
+          <el-input v-model="courseForm.scheduleInfo" placeholder="上课时间" style="width: 180px;" />
+          <el-input-number v-model="courseForm.credit" :min="1" :max="10" style="width: 100px;" />
+          <el-input-number v-model="courseForm.capacity" :min="1" style="width: 100px;" />
+          <el-input v-model="courseForm.description" placeholder="课程简介" style="width: 260px;" />
+          <el-button type="primary" @click="submitCourse">{{ courseForm.id ? '更新' : '新增' }}</el-button>
+          <el-button @click="resetCourseForm">清空</el-button>
+          <el-button @click="loadCourses">刷新</el-button>
+        </div>
+        <div class="panel-card" style="margin-top: 12px;">
+          <div class="panel-card-body" style="padding: 0;">
+            <el-table :data="courses" border style="border: none;">
+              <el-table-column prop="name" label="课程名称" min-width="140" show-overflow-tooltip />
+              <el-table-column prop="teacherName" label="授课教师" width="100" />
+              <el-table-column prop="college" label="院系" width="110" />
+              <el-table-column prop="semester" label="学期" width="120" />
+              <el-table-column prop="classroom" label="教室" width="120" />
+              <el-table-column prop="credit" label="学分" width="70" />
+              <el-table-column label="操作" width="150">
+                <template #default="{ row }">
+                  <el-button size="small" text type="primary" @click="editCourse(row)">编辑</el-button>
+                  <el-button size="small" text type="danger" @click="removeCourse(row.id)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <el-pagination
+              class="mgmt-pagination"
+              layout="total, sizes, prev, pager, next"
+              background
+              :current-page="coursePage.current"
+              :page-size="PAGE_SIZE"
+              :page-sizes="[10, 20, 50, 100]"
+              :total="coursePage.total"
+              @current-change="changeCoursePage"
+              @size-change="changeCoursePageSize"
+            />
+          </div>
+        </div>
+      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
@@ -362,10 +412,11 @@
 <script setup>
 import { computed, defineComponent, h, onMounted, reactive, ref } from 'vue'
 import { ElButton, ElMessage, ElMessageBox, ElUpload } from 'element-plus'
-import { AlarmClock, UserFilled, ChatLineSquare, Collection, Search } from '@element-plus/icons-vue'
+import { AlarmClock, Reading, UserFilled, ChatLineSquare, Collection, Search } from '@element-plus/icons-vue'
 import { useAuthStore } from '../../stores/auth'
 import { createUser, deleteUser, getUserPage, updateUser } from '../../api/auth'
 import { createBook, deleteBook, getBookManagePage, getBorrowPage, updateBook } from '../../api/book'
+import { createCourse, deleteCourse, getCourseManagePage, updateCourse } from '../../api/course'
 import { createExam, deleteExam, getExamManagePage, getExamSeats, generateExamSeats, saveExamSeats, getExamSeatsExportUrl, getExamTeachers, updateExam, updateExamSeat } from '../../api/course'
 import { approveNotice, createNotice, deleteNotice, getNoticeManagePage, rejectNotice, updateNotice } from '../../api/notice'
 import { uploadImage } from '../../api/upload'
@@ -412,6 +463,9 @@ const bookSubTab = ref('book-list')
 // 考试管理
 const exams = ref([])
 const examPage = reactive({ current: 1, total: 0 })
+const courses = ref([])
+const coursePage = reactive({ current: 1, total: 0 })
+const courseForm = reactive({ id: null, name: '', teacherName: '', college: '计算机学院', semester: '2025-2026-2', classroom: '', scheduleInfo: '', credit: 3, capacity: 60, description: '', status: 1 })
 const examForm = reactive({ id: null, courseId: null, courseName: '', examDate: '', startTime: '', endTime: '', location: '', invigilator: [], examType: '期末考试', college: '计算机学院', status: 1 })
 const examSubTab = ref('exam-list')
 const teacherOptions = ref([])
@@ -481,7 +535,7 @@ function changeBorrowPageSize(s) { borrowPageInfo.current = 1; PAGE_SIZE = s; lo
 async function loadAll() {
   if (!isAdmin.value && activeTab.value === 'user') activeTab.value = 'notice'
   const tasks = [loadNotices(), loadExams()]
-  if (isAdmin.value) tasks.push(loadStudents(), loadTeachers(), loadBooks(), loadBorrows())
+  if (isAdmin.value) tasks.push(loadStudents(), loadTeachers(), loadBooks(), loadBorrows(), loadCourses())
   await Promise.all(tasks)
 }
 
@@ -651,6 +705,26 @@ function exportSeats() {
   const url = getExamSeatsExportUrl(currentExamId.value)
   window.open(url, '_blank')
 }
+
+// ===== 课程管理 =====
+function changeCoursePage(p) { coursePage.current = p; loadCourses() }
+function changeCoursePageSize(s) { coursePage.current = 1; PAGE_SIZE = s; loadCourses() }
+async function loadCourses() {
+  try {
+    const data = await getCourseManagePage({ current: coursePage.current, size: PAGE_SIZE })
+    courses.value = data.records || []
+    coursePage.total = Number(data.total) || 0
+  } catch { courses.value = [] }
+}
+async function submitCourse() {
+  if (!courseForm.name.trim()) { ElMessage.warning('请填写课程名称'); return }
+  await (courseForm.id ? updateCourse(courseForm) : createCourse(courseForm))
+  ElMessage.success(courseForm.id ? '课程更新成功' : '课程新增成功')
+  resetCourseForm(); await loadCourses()
+}
+async function removeCourse(id) { if (!await confirmDelete('课程')) return; await deleteCourse(id); ElMessage.success('课程已删除'); resetCourseForm(); await loadCourses() }
+function editCourse(row) { Object.assign(courseForm, { id: row.id, name: row.name, teacherName: row.teacherName || '', college: row.college || '计算机学院', semester: row.semester || '2025-2026-2', classroom: row.classroom || '', scheduleInfo: row.scheduleInfo || '', credit: row.credit ?? 3, capacity: row.capacity ?? 60, description: row.description || '', status: row.status ?? 1 }) }
+function resetCourseForm() { Object.assign(courseForm, { id: null, name: '', teacherName: '', college: '计算机学院', semester: '2025-2026-2', classroom: '', scheduleInfo: '', credit: 3, capacity: 60, description: '', status: 1 }) }
 
 onMounted(() => {
   if (isAdmin.value) activeTab.value = 'user'
