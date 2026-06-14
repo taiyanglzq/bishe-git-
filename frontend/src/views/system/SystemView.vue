@@ -44,10 +44,13 @@
             <el-pagination
               class="mgmt-pagination"
               layout="total, sizes, prev, pager, next"
+              background
               :current-page="userPage.current"
               :page-size="PAGE_SIZE"
+              :page-sizes="[10, 20, 50, 100]"
               :total="userPage.total"
               @current-change="changeUserPage"
+              @size-change="changeUserPageSize"
             />
           </div>
         </div>
@@ -96,10 +99,13 @@
             <el-pagination
               class="mgmt-pagination"
               layout="total, sizes, prev, pager, next"
+              background
               :current-page="noticePage.current"
               :page-size="PAGE_SIZE"
+              :page-sizes="[10, 20, 50, 100]"
               :total="noticePage.total"
               @current-change="changeNoticePage"
+              @size-change="changeNoticePageSize"
             />
           </div>
         </div>
@@ -156,10 +162,13 @@
                 <el-pagination
                   class="mgmt-pagination"
                   layout="total, sizes, prev, pager, next"
+              background
                   :current-page="bookPage.current"
                   :page-size="PAGE_SIZE"
+              :page-sizes="[10, 20, 50, 100]"
                   :total="bookPage.total"
                   @current-change="changeBookPage"
+              @size-change="changeBookPageSize"
                 />
               </div>
             </div>
@@ -191,10 +200,13 @@
                 <el-pagination
                   class="mgmt-pagination"
                   layout="total, sizes, prev, pager, next"
+              background
                   :current-page="borrowPageInfo.current"
                   :page-size="PAGE_SIZE"
+              :page-sizes="[10, 20, 50, 100]"
                   :total="borrowPageInfo.total"
                   @current-change="changeBorrowPage"
+              @size-change="changeBorrowPageSize"
                 />
               </div>
             </div>
@@ -250,10 +262,13 @@
                 <el-pagination
                   class="mgmt-pagination"
                   layout="total, sizes, prev, pager, next"
+              background
                   :current-page="examPage.current"
                   :page-size="PAGE_SIZE"
+              :page-sizes="[10, 20, 50, 100]"
                   :total="examPage.total"
                   @current-change="changeExamPage"
+              @size-change="changeExamPageSize"
                 />
               </div>
             </div>
@@ -335,7 +350,7 @@ const users = ref([])
 const notices = ref([])
 const books = ref([])
 
-const PAGE_SIZE = 10
+let PAGE_SIZE = 10
 const userPage = reactive({ current: 1, total: 0 })
 const noticePage = reactive({ current: 1, total: 0 })
 const bookPage = reactive({ current: 1, total: 0 })
@@ -386,9 +401,13 @@ async function loadNotices() {
   } catch { notices.value = [] }
 }
 function changeUserPage(p) { userPage.current = p; loadUsers() }
+function changeUserPageSize(s) { userPage.current = 1; PAGE_SIZE = s; loadUsers() }
 function changeNoticePage(p) { noticePage.current = p; loadNotices() }
+function changeNoticePageSize(s) { noticePage.current = 1; PAGE_SIZE = s; loadNotices() }
 function changeBookPage(p) { bookPage.current = p; loadBooks() }
+function changeBookPageSize(s) { bookPage.current = 1; PAGE_SIZE = s; loadBooks() }
 function changeBorrowPage(p) { borrowPageInfo.current = p; loadBorrows() }
+function changeBorrowPageSize(s) { borrowPageInfo.current = 1; PAGE_SIZE = s; loadBorrows() }
 
 async function loadAll() {
   if (!isAdmin.value && activeTab.value === 'user') activeTab.value = 'notice'
@@ -480,6 +499,7 @@ function formatTime(time) {
 
 // ===== 考试管理 =====
 function changeExamPage(p) { examPage.current = p; loadExams() }
+function changeExamPageSize(s) { examPage.current = 1; PAGE_SIZE = s; loadExams() }
 
 async function loadExams() {
   try {
