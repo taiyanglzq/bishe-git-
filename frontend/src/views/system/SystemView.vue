@@ -21,39 +21,81 @@
           <el-input v-model="userForm.password" placeholder="密码，默认123456" style="width: 160px;" />
           <el-button type="primary" @click="submitUser">{{ userForm.id ? '更新' : '新增' }}</el-button>
           <el-button @click="resetUserForm">清空</el-button>
-          <el-button @click="loadUsers">刷新</el-button>
         </div>
-        <div class="panel-card">
-          <div class="panel-card-body" style="padding: 0;">
-            <el-table :data="users" border style="border: none;">
-              <el-table-column label="登录号" min-width="150">
-                <template #default="{ row }">{{ loginNoLabel(row.roleCode) }}：{{ row.username }}</template>
-              </el-table-column>
-              <el-table-column prop="realName" label="姓名" width="110" />
-              <el-table-column prop="college" label="院系" width="150" />
-              <el-table-column label="角色" width="100">
-                <template #default="{ row }"><el-tag size="small">{{ roleLabel(row.roleCode) }}</el-tag></template>
-              </el-table-column>
-              <el-table-column label="操作" width="150">
-                <template #default="{ row }">
-                  <el-button size="small" text type="primary" @click="editUser(row)">编辑</el-button>
-                  <el-button size="small" text type="danger" @click="removeUser(row.id)">删除</el-button>
-                </template>
-              </el-table-column>
-            </el-table>
-            <el-pagination
-              class="mgmt-pagination"
-              layout="total, sizes, prev, pager, next"
-              background
-              :current-page="userPage.current"
-              :page-size="PAGE_SIZE"
-              :page-sizes="[10, 20, 50, 100]"
-              :total="userPage.total"
-              @current-change="changeUserPage"
-              @size-change="changeUserPageSize"
-            />
-          </div>
-        </div>
+        <el-tabs v-model="userSubTab">
+          <el-tab-pane name="student-list">
+            <template #label><span class="tab-label">学生管理</span></template>
+            <div class="mgmt-form-row">
+              <el-input v-model="studentKeyword" placeholder="搜索学号或姓名..." clearable style="width: 260px;" :prefix-icon="Search" @keyup.enter="searchStudents" />
+              <el-button type="primary" :icon="Search" @click="searchStudents">搜索</el-button>
+              <el-button @click="loadStudents">刷新</el-button>
+            </div>
+            <div class="panel-card" style="margin-top: 12px;">
+              <div class="panel-card-body" style="padding: 0;">
+                <el-table :data="students" border style="border: none;">
+                  <el-table-column label="学号" min-width="150">
+                    <template #default="{ row }">{{ row.username }}</template>
+                  </el-table-column>
+                  <el-table-column prop="realName" label="姓名" width="120" />
+                  <el-table-column prop="college" label="院系" width="150" />
+                  <el-table-column label="操作" width="150">
+                    <template #default="{ row }">
+                      <el-button size="small" text type="primary" @click="editUser(row)">编辑</el-button>
+                      <el-button size="small" text type="danger" @click="removeUser(row.id)">删除</el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
+                <el-pagination
+                  class="mgmt-pagination"
+                  layout="total, sizes, prev, pager, next"
+                  background
+                  :current-page="studentPage.current"
+                  :page-size="PAGE_SIZE"
+                  :page-sizes="[10, 20, 50, 100]"
+                  :total="studentPage.total"
+                  @current-change="changeStudentPage"
+                  @size-change="changeStudentPageSize"
+                />
+              </div>
+            </div>
+          </el-tab-pane>
+          <el-tab-pane name="teacher-list">
+            <template #label><span class="tab-label">教师管理</span></template>
+            <div class="mgmt-form-row">
+              <el-input v-model="teacherKeyword" placeholder="搜索工号或姓名..." clearable style="width: 260px;" :prefix-icon="Search" @keyup.enter="searchTeachers" />
+              <el-button type="primary" :icon="Search" @click="searchTeachers">搜索</el-button>
+              <el-button @click="loadTeachers">刷新</el-button>
+            </div>
+            <div class="panel-card" style="margin-top: 12px;">
+              <div class="panel-card-body" style="padding: 0;">
+                <el-table :data="teachers" border style="border: none;">
+                  <el-table-column label="工号" min-width="150">
+                    <template #default="{ row }">{{ row.username }}</template>
+                  </el-table-column>
+                  <el-table-column prop="realName" label="姓名" width="120" />
+                  <el-table-column prop="college" label="院系" width="150" />
+                  <el-table-column label="操作" width="150">
+                    <template #default="{ row }">
+                      <el-button size="small" text type="primary" @click="editUser(row)">编辑</el-button>
+                      <el-button size="small" text type="danger" @click="removeUser(row.id)">删除</el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
+                <el-pagination
+                  class="mgmt-pagination"
+                  layout="total, sizes, prev, pager, next"
+                  background
+                  :current-page="teacherPage.current"
+                  :page-size="PAGE_SIZE"
+                  :page-sizes="[10, 20, 50, 100]"
+                  :total="teacherPage.total"
+                  @current-change="changeTeacherPage"
+                  @size-change="changeTeacherPageSize"
+                />
+              </div>
+            </div>
+          </el-tab-pane>
+        </el-tabs>
       </el-tab-pane>
 
       <el-tab-pane name="notice">
@@ -348,12 +390,18 @@ const ImageUploader = defineComponent({
 const activeTab = ref('notice')
 const authStore = useAuthStore()
 const isAdmin = computed(() => authStore.user?.roleCode === 'ADMIN')
-const users = ref([])
 const notices = ref([])
 const books = ref([])
 
 let PAGE_SIZE = 10
 const userPage = reactive({ current: 1, total: 0 })
+const userSubTab = ref('student-list')
+const students = ref([])
+const studentPage = reactive({ current: 1, total: 0 })
+const studentKeyword = ref('')
+const teachers = ref([])
+const teacherPage = reactive({ current: 1, total: 0 })
+const teacherKeyword = ref('')
 const noticePage = reactive({ current: 1, total: 0 })
 const bookPage = reactive({ current: 1, total: 0 })
 const borrowRecords = ref([])
@@ -389,15 +437,31 @@ function loginNoLabel(roleCode) { return roleCode === 'STUDENT' ? '学号' : rol
 function roleLabel(roleCode) { return { STUDENT: '学生', TEACHER: '教师', ADMIN: '管理员' }[roleCode] || roleCode }
 
 
-async function loadUsers() {
+async function loadStudents() {
   try {
-    const data = await getUserPage({ current: userPage.current, size: PAGE_SIZE })
-    console.log('loadUsers data:', data)
-    users.value = data.records || []
-    userPage.total = Number(data.total) || 0
-    console.log('userPage.total=', userPage.total)
-  } catch (e) { console.error('loadUsers error:', e); users.value = [] }
+    const params = { current: studentPage.current, size: PAGE_SIZE, roleCode: 'STUDENT' }
+    if (studentKeyword.value) params.keyword = studentKeyword.value
+    const data = await getUserPage(params)
+    students.value = data.records || []
+    studentPage.total = Number(data.total) || 0
+  } catch { students.value = [] }
 }
+function changeStudentPage(p) { studentPage.current = p; loadStudents() }
+function changeStudentPageSize(s) { studentPage.current = 1; PAGE_SIZE = s; loadStudents() }
+function searchStudents() { studentPage.current = 1; loadStudents() }
+
+async function loadTeachers() {
+  try {
+    const params = { current: teacherPage.current, size: PAGE_SIZE, roleCode: 'TEACHER' }
+    if (teacherKeyword.value) params.keyword = teacherKeyword.value
+    const data = await getUserPage(params)
+    teachers.value = data.records || []
+    teacherPage.total = Number(data.total) || 0
+  } catch { teachers.value = [] }
+}
+function changeTeacherPage(p) { teacherPage.current = p; loadTeachers() }
+function changeTeacherPageSize(s) { teacherPage.current = 1; PAGE_SIZE = s; loadTeachers() }
+function searchTeachers() { teacherPage.current = 1; loadTeachers() }
 async function loadNotices() {
   try {
     const data = await getNoticeManagePage({ current: noticePage.current, size: PAGE_SIZE })
@@ -417,7 +481,7 @@ function changeBorrowPageSize(s) { borrowPageInfo.current = 1; PAGE_SIZE = s; lo
 async function loadAll() {
   if (!isAdmin.value && activeTab.value === 'user') activeTab.value = 'notice'
   const tasks = [loadNotices(), loadExams()]
-  if (isAdmin.value) tasks.push(loadUsers(), loadBooks(), loadBorrows())
+  if (isAdmin.value) tasks.push(loadStudents(), loadTeachers(), loadBooks(), loadBorrows())
   await Promise.all(tasks)
 }
 

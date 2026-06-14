@@ -11,7 +11,7 @@ public interface UserService {
 
     UserVO current();
 
-    Page<UserVO> page(Long current, Long size, String keyword);
+    Page<UserVO> page(Long current, Long size, String keyword, String roleCode);
 
     Long save(UserSaveDTO dto);
 

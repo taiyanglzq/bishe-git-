@@ -44,8 +44,9 @@ public class UserController {
     @GetMapping("/page")
     public Result<Page<UserVO>> page(@RequestParam(defaultValue = "1") Long current,
                                      @RequestParam(defaultValue = "10") Long size,
-                                     @RequestParam(required = false) String keyword) {
-        return Result.success(userService.page(current, size, keyword));
+                                     @RequestParam(required = false) String keyword,
+                                     @RequestParam(required = false) String roleCode) {
+        return Result.success(userService.page(current, size, keyword, roleCode));
     }
 
     @PostMapping

@@ -33,16 +33,20 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Page<UserVO> page(Long current, Long size, String keyword) {  // current：当前页码
-        // 1. 权限校验：只有管理员可以查看用户列表
+    public Page<UserVO> page(Long current, Long size, String keyword, String roleCode) {
         RoleUtils.requireAny("ADMIN");
-        Page<User> page = userMapper.selectPage(Page.of(current, size), new LambdaQueryWrapper<User>()
-                .eq(User::getDeleted, 0)
-                .and(keyword != null && !keyword.isBlank(), wrapper -> wrapper
-                        .like(User::getUsername, keyword)
-                        .or()
-                        .like(User::getRealName, keyword))
-                .orderByDesc(User::getCreateTime));
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<User>()
+                .eq(User::getDeleted, 0);
+        if (roleCode != null && !roleCode.isBlank()) {
+            wrapper.eq(User::getRoleCode, roleCode);
+        }
+        if (keyword != null && !keyword.isBlank()) {
+            wrapper.and(w -> w.like(User::getUsername, keyword)
+                    .or()
+                    .like(User::getRealName, keyword));
+        }
+        wrapper.orderByDesc(User::getCreateTime);
+        Page<User> page = userMapper.selectPage(Page.of(current, size), wrapper);
         Page<UserVO> voPage = Page.of(current, size, page.getTotal());
         voPage.setRecords(page.getRecords().stream().map(UserVO::from).toList());
         return voPage;
