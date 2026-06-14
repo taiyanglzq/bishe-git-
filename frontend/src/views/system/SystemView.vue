@@ -167,6 +167,10 @@
 
           <el-tab-pane name="borrow-record">
             <template #label><span class="tab-label">借阅记录</span></template>
+            <div class="mgmt-form-row">
+              <el-input v-model="borrowKeyword" placeholder="搜索书名、作者或ISBN..." clearable style="width: 300px;" :prefix-icon="Search" @keyup.enter="searchBorrows" />
+              <el-button type="primary" :icon="Search" @click="searchBorrows">搜索</el-button>
+            </div>
             <div class="panel-card" style="margin-top: 12px;">
               <div class="panel-card-body" style="padding: 0;">
                 <el-table :data="borrowRecords" border style="border: none;">
@@ -204,7 +208,7 @@
 <script setup>
 import { computed, defineComponent, h, onMounted, reactive, ref } from 'vue'
 import { ElButton, ElMessage, ElMessageBox, ElUpload } from 'element-plus'
-import { UserFilled, ChatLineSquare, Collection } from '@element-plus/icons-vue'
+import { UserFilled, ChatLineSquare, Collection, Search } from '@element-plus/icons-vue'
 import { useAuthStore } from '../../stores/auth'
 import { createUser, deleteUser, getUserPage, updateUser } from '../../api/auth'
 import { createBook, deleteBook, getBookManagePage, getBorrowPage, updateBook } from '../../api/book'
@@ -241,6 +245,7 @@ const noticePage = reactive({ current: 1, total: 0 })
 const bookPage = reactive({ current: 1, total: 0 })
 const borrowRecords = ref([])
 const borrowPageInfo = reactive({ current: 1, total: 0 })
+const borrowKeyword = ref('')
 
 const userForm = reactive({ id: null, loginNo: '', realName: '', college: '计算机学院', roleCode: 'STUDENT', password: '123456', status: 1 })
 const noticeForm = reactive({ id: null, title: '', category: '系统通知', content: '', scopeType: 'COLLEGE', scopeCollege: '计算机学院', status: 1 })
@@ -339,8 +344,12 @@ async function removeBook(id) { if (!await confirmDelete('图书')) return; awai
 function editBook(row) { Object.assign(bookForm, { id: row.id, title: row.title, author: row.author || '', isbn: row.isbn || '', publisher: row.publisher || '', publishYear: row.publishYear || '', category: row.category || '计算机科学', location: row.location || '', totalCount: row.totalCount || 1, availableCount: row.availableCount ?? 1, description: row.description || '', coverUrl: row.coverUrl || '', status: row.status ?? 1 }) }
 function resetBookForm() { Object.assign(bookForm, { id: null, title: '', author: '', isbn: '', publisher: '', publishYear: '', category: '计算机科学', location: '', totalCount: 1, availableCount: 1, description: '', coverUrl: '', status: 1 }) }
 
+function searchBorrows() { borrowPageInfo.current = 1; loadBorrows() }
+
 async function loadBorrows() {
-  const data = await getBorrowPage({ current: borrowPageInfo.current, size: PAGE_SIZE })
+  const params = { current: borrowPageInfo.current, size: PAGE_SIZE }
+  if (borrowKeyword.value) params.keyword = borrowKeyword.value
+  const data = await getBorrowPage(params)
   borrowRecords.value = data.records || []
   borrowPageInfo.total = data.total || 0
 }

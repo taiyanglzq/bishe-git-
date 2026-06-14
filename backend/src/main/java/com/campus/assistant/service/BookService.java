@@ -62,5 +62,5 @@ public interface BookService {
     /**
      * 管理端分页查询借阅记录（含借阅人信息），仅 ADMIN
      */
-    com.baomidou.mybatisplus.extension.plugins.pagination.Page<BookBorrowVO> borrowPage(Long current, Long size);
+    com.baomidou.mybatisplus.extension.plugins.pagination.Page<BookBorrowVO> borrowPage(Long current, Long size, String keyword);
 }

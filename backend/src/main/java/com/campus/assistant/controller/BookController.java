@@ -87,7 +87,8 @@ public class BookController {
 
     @GetMapping("/borrow/page")
     public Result<Page<BookBorrowVO>> borrowPage(@RequestParam(defaultValue = "1") Long current,
-                                                  @RequestParam(defaultValue = "10") Long size) {
-        return Result.success(bookService.borrowPage(current, size));
+                                                  @RequestParam(defaultValue = "10") Long size,
+                                                  @RequestParam(required = false) String keyword) {
+        return Result.success(bookService.borrowPage(current, size, keyword));
     }
 }

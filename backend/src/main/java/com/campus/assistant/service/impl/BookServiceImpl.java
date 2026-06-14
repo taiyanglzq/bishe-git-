@@ -249,12 +249,27 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public Page<BookBorrowVO> borrowPage(Long current, Long size) {
+    public Page<BookBorrowVO> borrowPage(Long current, Long size, String keyword) {
         RoleUtils.requireAny("ADMIN");
+        LambdaQueryWrapper<BookBorrow> wrapper = new LambdaQueryWrapper<BookBorrow>()
+                .eq(BookBorrow::getDeleted, 0);
+        if (keyword != null && !keyword.isBlank()) {
+            // 先查询匹配的图书ID，再按图书ID筛选借阅记录
+            List<Long> matchedBookIds = bookMapper.selectList(new LambdaQueryWrapper<Book>()
+                            .eq(Book::getDeleted, 0)
+                            .and(w -> w.like(Book::getTitle, keyword)
+                                    .or()
+                                    .like(Book::getAuthor, keyword)
+                                    .or()
+                                    .like(Book::getIsbn, keyword)))
+                    .stream().map(Book::getId).distinct().toList();
+            if (matchedBookIds.isEmpty()) {
+                return Page.of(current, size, 0);
+            }
+            wrapper.in(BookBorrow::getBookId, matchedBookIds);
+        }
         Page<BookBorrow> page = bookBorrowMapper.selectPage(Page.of(current, size),
-                new LambdaQueryWrapper<BookBorrow>()
-                        .eq(BookBorrow::getDeleted, 0)
-                        .orderByDesc(BookBorrow::getCreateTime));
+                wrapper.orderByDesc(BookBorrow::getCreateTime));
         List<Long> bookIds = page.getRecords().stream().map(BookBorrow::getBookId).distinct().toList();
         List<Long> userIds = page.getRecords().stream().map(BookBorrow::getUserId).distinct().toList();
         java.util.Map<Long, Book> bookMap = bookIds.isEmpty() ? java.util.Collections.emptyMap()
