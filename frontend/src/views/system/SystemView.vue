@@ -43,7 +43,7 @@
             </el-table>
             <el-pagination
               class="mgmt-pagination"
-              layout="prev, pager, next, total"
+              layout="total, sizes, prev, pager, next"
               :current-page="userPage.current"
               :page-size="PAGE_SIZE"
               :total="userPage.total"
@@ -95,7 +95,7 @@
             </el-table>
             <el-pagination
               class="mgmt-pagination"
-              layout="prev, pager, next, total"
+              layout="total, sizes, prev, pager, next"
               :current-page="noticePage.current"
               :page-size="PAGE_SIZE"
               :total="noticePage.total"
@@ -155,7 +155,7 @@
                 </el-table>
                 <el-pagination
                   class="mgmt-pagination"
-                  layout="prev, pager, next, total"
+                  layout="total, sizes, prev, pager, next"
                   :current-page="bookPage.current"
                   :page-size="PAGE_SIZE"
                   :total="bookPage.total"
@@ -190,7 +190,7 @@
                 </el-table>
                 <el-pagination
                   class="mgmt-pagination"
-                  layout="prev, pager, next, total"
+                  layout="total, sizes, prev, pager, next"
                   :current-page="borrowPageInfo.current"
                   :page-size="PAGE_SIZE"
                   :total="borrowPageInfo.total"
@@ -249,7 +249,7 @@
                 </el-table>
                 <el-pagination
                   class="mgmt-pagination"
-                  layout="prev, pager, next, total"
+                  layout="total, sizes, prev, pager, next"
                   :current-page="examPage.current"
                   :page-size="PAGE_SIZE"
                   :total="examPage.total"
@@ -335,7 +335,7 @@ const users = ref([])
 const notices = ref([])
 const books = ref([])
 
-const PAGE_SIZE = 10
+const PAGE_SIZE = 15
 const userPage = reactive({ current: 1, total: 0 })
 const noticePage = reactive({ current: 1, total: 0 })
 const bookPage = reactive({ current: 1, total: 0 })
