@@ -1,0 +1,50 @@
+-- ========================================
+-- 生成 40 个学生账号
+-- 学号范围：23050539401 ~ 23050539440
+-- 默认密码：123456（BCrypt 加密）
+-- 院系：计算机学院
+-- 注意：23050529414 已存在，跳过
+-- ========================================
+
+INSERT INTO ca_user (username, password, real_name, student_no, college, id_card_last6, role_code, status, initial_password)
+VALUES
+('23050539401', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '张伟', '23050539401', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539402', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '王芳', '23050539402', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539403', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '李娜', '23050539403', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539404', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '刘洋', '23050539404', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539405', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '陈静', '23050539405', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539406', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '杨磊', '23050539406', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539407', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '赵敏', '23050539407', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539408', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '黄勇', '23050539408', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539409', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '周杰', '23050539409', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539410', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '吴婷', '23050539410', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539411', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '徐强', '23050539411', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539412', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '孙丽', '23050539412', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539413', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '马超', '23050539413', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539414', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '朱红', '23050539414', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539415', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '秦亮', '23050539415', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539416', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '胡鑫', '23050539416', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539417', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '郭凯', '23050539417', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539418', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '林芳', '23050539418', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539419', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '何明', '23050539419', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539420', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '罗艳', '23050539420', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539421', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '梁浩', '23050539421', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539422', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '宋雪', '23050539422', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539423', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '唐峰', '23050539423', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539424', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '韩冰', '23050539424', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539425', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '冯倩', '23050539425', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539426', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '董斌', '23050539426', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539427', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '程琳', '23050539427', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539428', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '曹杰', '23050539428', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539429', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '袁婷', '23050539429', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539430', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '邓超', '23050539430', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539431', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '许慧', '23050539431', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539432', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '傅强', '23050539432', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539433', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '沈娟', '23050539433', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539434', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '彭涛', '23050539434', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539435', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '蒋雯', '23050539435', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539436', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '余磊', '23050539436', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539437', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '潘琳', '23050539437', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539438', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '任宇', '23050539438', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539439', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '段婷', '23050539439', '计算机学院', '123456', 'STUDENT', 1, 1),
+('23050539440', '$2a$10$6WpkTnTbHnTsy4Sr3ckUSu2UssWl8P6L4NokvB/BmW33COYRVo6.W', '邹凯', '23050539440', '计算机学院', '123456', 'STUDENT', 1, 1);
