@@ -200,6 +200,7 @@
             </div>
           </el-tab-pane>
         </el-tabs>
+      </el-tab-pane>
       <el-tab-pane v-if="isAdmin" name="exam">
         <template #label><span class="tab-label"><el-icon><AlarmClock /></el-icon> 考试管理</span></template>
         <el-tabs v-model="examSubTab">
