@@ -389,9 +389,11 @@ function roleLabel(roleCode) { return { STUDENT: '学生', TEACHER: '教师', AD
 async function loadUsers() {
   try {
     const data = await getUserPage({ current: userPage.current, size: PAGE_SIZE })
+    console.log('loadUsers data:', data)
     users.value = data.records || []
     userPage.total = data.total || 0
-  } catch { users.value = [] }
+    console.log('userPage.total=', userPage.total)
+  } catch (e) { console.error('loadUsers error:', e); users.value = [] }
 }
 async function loadNotices() {
   try {
