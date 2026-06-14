@@ -80,7 +80,7 @@
               <el-icon><UserFilled /></el-icon>
               <span>监考：{{ item.invigilator }}</span>
             </div>
-            <div v-if="seatsMap[item.id] || item.seatNo" class="exam-info-item">
+            <div v-if="isStudent && (seatsMap[item.id] || item.seatNo)" class="exam-info-item">
               <el-icon><Tickets /></el-icon>
               <span>座位号：{{ seatsMap[item.id] || item.seatNo }}</span>
             </div>
@@ -117,6 +117,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getExamPage, getMyExamSeats } from '../../api/course'
+import { useAuthStore } from '../../stores/auth'
 import { Search, Refresh, Clock, Location, OfficeBuilding, Tickets, UserFilled, Document } from '@element-plus/icons-vue'
 
 const PAGE_SIZE = 10
@@ -128,6 +129,8 @@ const currentPage = ref(1)
 const loading = ref(false)
 const exams = ref([])
 const seatsMap = ref({})
+const authStore = useAuthStore()
+const isStudent = computed(() => authStore.user?.roleCode === 'STUDENT')
 
 const filteredExams = computed(() => {
   let list = exams.value
@@ -193,15 +196,17 @@ async function fetchExams() {
     if (keyword.value) params.keyword = keyword.value
     const res = await getExamPage(params)
     exams.value = res.records || []
-    // 获取当前用户的座位信息
-    try {
-      const mySeats = await getMyExamSeats()
-      const map = {}
-      if (Array.isArray(mySeats)) {
-        mySeats.forEach(s => { map[s.examId] = s.seatNo })
-      }
-      seatsMap.value = map
-    } catch { /* ignore */ }
+    // 仅学生获取座位信息
+    if (isStudent.value) {
+      try {
+        const mySeats = await getMyExamSeats()
+        const map = {}
+        if (Array.isArray(mySeats)) {
+          mySeats.forEach(s => { map[s.examId] = s.seatNo })
+        }
+        seatsMap.value = map
+      } catch { /* ignore */ }
+    }
   } catch {
     ElMessage.error('获取考试安排失败')
     exams.value = []
