@@ -92,6 +92,11 @@ public class ExamController {
         return Result.success();
     }
 
+    @GetMapping("/seats/my")
+    public Result<List<ExamSeat>> mySeats() {
+        return Result.success(examService.mySeats());
+    }
+
     @GetMapping("/{id}/seats/export")
     public ResponseEntity<byte[]> exportSeats(@PathVariable Long id) {
         byte[] data = examService.exportSeats(id);

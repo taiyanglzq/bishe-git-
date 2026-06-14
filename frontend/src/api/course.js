@@ -65,3 +65,7 @@ export function updateExamSeat(seatId, seatNo) {
 export function getExamSeatsExportUrl(examId) {
   return `/exam/${examId}/seats/export`
 }
+
+export function getMyExamSeats() {
+  return request.get('/exam/seats/my')
+}

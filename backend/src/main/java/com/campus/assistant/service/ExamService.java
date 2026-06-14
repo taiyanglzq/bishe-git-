@@ -64,4 +64,9 @@ public interface ExamService {
      * 导出座位表 Excel
      */
     byte[] exportSeats(Long examId);
+
+    /**
+     * 获取当前用户的座位信息（用于学生端显示）
+     */
+    List<ExamSeat> mySeats();
 }

@@ -273,6 +273,15 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    public List<ExamSeat> mySeats() {
+        Long userId = UserContext.getUserId();
+        if (userId == null) return List.of();
+        return examSeatMapper.selectList(new LambdaQueryWrapper<ExamSeat>()
+                .eq(ExamSeat::getStudentId, userId)
+                .eq(ExamSeat::getDeleted, 0));
+    }
+
+    @Override
     public byte[] exportSeats(Long examId) {
         RoleUtils.requireAny("TEACHER", "ADMIN");
         Exam exam = examMapper.selectById(examId);
