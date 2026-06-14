@@ -367,14 +367,18 @@ function roleLabel(roleCode) { return { STUDENT: '学生', TEACHER: '教师', AD
 
 
 async function loadUsers() {
-  const data = await getUserPage({ current: userPage.current, size: PAGE_SIZE })
-  users.value = data.records || []
-  userPage.total = data.total || 0
+  try {
+    const data = await getUserPage({ current: userPage.current, size: PAGE_SIZE })
+    users.value = data.records || []
+    userPage.total = data.total || 0
+  } catch { users.value = [] }
 }
 async function loadNotices() {
-  const data = await getNoticeManagePage({ current: noticePage.current, size: PAGE_SIZE })
-  notices.value = data.records || []
-  noticePage.total = data.total || 0
+  try {
+    const data = await getNoticeManagePage({ current: noticePage.current, size: PAGE_SIZE })
+    notices.value = data.records || []
+    noticePage.total = data.total || 0
+  } catch { notices.value = [] }
 }
 function changeUserPage(p) { userPage.current = p; loadUsers() }
 function changeNoticePage(p) { noticePage.current = p; loadNotices() }
@@ -430,9 +434,11 @@ function resetUserForm() { Object.assign(userForm, { id: null, loginNo: '', real
 function resetNoticeForm() { Object.assign(noticeForm, { id: null, title: '', category: '系统通知', content: '', scopeType: 'COLLEGE', scopeCollege: '计算机学院', status: 1 }) }
 
 async function loadBooks() {
-  const data = await getBookManagePage({ current: bookPage.current, size: PAGE_SIZE })
-  books.value = data.records || []
-  bookPage.total = data.total || 0
+  try {
+    const data = await getBookManagePage({ current: bookPage.current, size: PAGE_SIZE })
+    books.value = data.records || []
+    bookPage.total = data.total || 0
+  } catch { books.value = [] }
 }
 
 async function submitBook() {
@@ -450,11 +456,13 @@ function resetBookForm() { Object.assign(bookForm, { id: null, title: '', author
 function searchBorrows() { borrowPageInfo.current = 1; loadBorrows() }
 
 async function loadBorrows() {
-  const params = { current: borrowPageInfo.current, size: PAGE_SIZE }
-  if (borrowKeyword.value) params.keyword = borrowKeyword.value
-  const data = await getBorrowPage(params)
-  borrowRecords.value = data.records || []
-  borrowPageInfo.total = data.total || 0
+  try {
+    const params = { current: borrowPageInfo.current, size: PAGE_SIZE }
+    if (borrowKeyword.value) params.keyword = borrowKeyword.value
+    const data = await getBorrowPage(params)
+    borrowRecords.value = data.records || []
+    borrowPageInfo.total = data.total || 0
+  } catch { borrowRecords.value = [] }
 }
 
 function formatTime(time) {
@@ -533,6 +541,6 @@ function exportSeats() {
 
 onMounted(() => {
   if (isAdmin.value) activeTab.value = 'user'
-  loadAll()
+  loadAll().catch(() => {})
 })
 </script>
