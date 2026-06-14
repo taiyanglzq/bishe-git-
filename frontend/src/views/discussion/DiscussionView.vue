@@ -214,7 +214,7 @@ async function uploadPostImage(file) {
 async function load() {
   const data = await getDiscussionPage({ current: page.current, size: PAGE_SIZE, keyword: keyword.value || undefined })
   posts.value = data.records || []
-  page.total = data.total || 0
+  page.total = Number(data.total) || 0
   refreshSelectedPost()
 }
 

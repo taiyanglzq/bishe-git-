@@ -391,7 +391,7 @@ async function loadUsers() {
     const data = await getUserPage({ current: userPage.current, size: PAGE_SIZE })
     console.log('loadUsers data:', data)
     users.value = data.records || []
-    userPage.total = data.total || 0
+    userPage.total = Number(data.total) || 0
     console.log('userPage.total=', userPage.total)
   } catch (e) { console.error('loadUsers error:', e); users.value = [] }
 }
@@ -399,7 +399,7 @@ async function loadNotices() {
   try {
     const data = await getNoticeManagePage({ current: noticePage.current, size: PAGE_SIZE })
     notices.value = data.records || []
-    noticePage.total = data.total || 0
+    noticePage.total = Number(data.total) || 0
   } catch { notices.value = [] }
 }
 function changeUserPage(p) { userPage.current = p; loadUsers() }
@@ -463,7 +463,7 @@ async function loadBooks() {
   try {
     const data = await getBookManagePage({ current: bookPage.current, size: PAGE_SIZE })
     books.value = data.records || []
-    bookPage.total = data.total || 0
+    bookPage.total = Number(data.total) || 0
   } catch { books.value = [] }
 }
 
@@ -487,7 +487,7 @@ async function loadBorrows() {
     if (borrowKeyword.value) params.keyword = borrowKeyword.value
     const data = await getBorrowPage(params)
     borrowRecords.value = data.records || []
-    borrowPageInfo.total = data.total || 0
+    borrowPageInfo.total = Number(data.total) || 0
   } catch { borrowRecords.value = [] }
 }
 
@@ -507,7 +507,7 @@ async function loadExams() {
   try {
     const data = await getExamManagePage({ current: examPage.current, size: PAGE_SIZE })
     exams.value = data.records || []
-    examPage.total = data.total || 0
+    examPage.total = Number(data.total) || 0
   } catch {
     exams.value = []
   }

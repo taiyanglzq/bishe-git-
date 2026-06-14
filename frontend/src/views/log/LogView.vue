@@ -84,7 +84,7 @@ function bizTypeLabel(t) {
 async function load() {
   const data = await getLogPage({ current: page.current, size: page.size })
   rows.value = data.records || []
-  page.total = data.total || 0
+  page.total = Number(data.total) || 0
 }
 
 function reload() {
