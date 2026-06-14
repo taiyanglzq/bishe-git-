@@ -357,26 +357,53 @@ public class ExamServiceImpl implements ExamService {
      * 向同院系学生发送考试通知
      */
     private void sendExamNotification(Exam exam) {
-        if (exam.getCollege() == null || exam.getCollege().isBlank()) {
-            return;
-        }
-        try {
-            List<User> students = userMapper.selectList(new LambdaQueryWrapper<User>()
-                    .eq(User::getCollege, exam.getCollege())
-                    .eq(User::getRoleCode, "STUDENT")
-                    .eq(User::getStatus, 1)
-                    .eq(User::getDeleted, 0));
-            String title = "考试通知：" + exam.getCourseName();
-            String content = exam.getCourseName() + " " + exam.getExamType()
-                    + " 将于 " + exam.getExamDate() + " " + exam.getStartTime() + "-" + exam.getEndTime()
-                    + " 在 " + (exam.getLocation() != null ? exam.getLocation() : "待定") + " 举行。"
-                    + (exam.getInvigilator() != null ? "监考老师：" + exam.getInvigilator() : "")
-                    + (exam.getSeatNo() != null ? "座位号：" + exam.getSeatNo() : "");
-            for (User student : students) {
-                notificationService.send(student.getId(), title, content, "EXAM", exam.getId());
+        String title = "考试通知：" + exam.getCourseName();
+        String content = exam.getCourseName() + " " + exam.getExamType()
+                + " 将于 " + exam.getExamDate() + " " + exam.getStartTime() + "-" + exam.getEndTime()
+                + " 在 " + (exam.getLocation() != null ? exam.getLocation() : "待定") + " 举行。"
+                + (exam.getInvigilator() != null ? "监考老师：" + exam.getInvigilator() : "")
+                + (exam.getSeatNo() != null ? "座位号：" + exam.getSeatNo() : "");
+
+        // 通知同院系学生
+        if (exam.getCollege() != null && !exam.getCollege().isBlank()) {
+            try {
+                List<User> students = userMapper.selectList(new LambdaQueryWrapper<User>()
+                        .eq(User::getCollege, exam.getCollege())
+                        .eq(User::getRoleCode, "STUDENT")
+                        .eq(User::getStatus, 1)
+                        .eq(User::getDeleted, 0));
+                for (User student : students) {
+                    notificationService.send(student.getId(), title, content, "EXAM", exam.getId());
+                }
+            } catch (Exception e) {
+                // 通知发送失败不影响考试创建
             }
-        } catch (Exception e) {
-            // 通知发送失败不影响考试创建
+        }
+
+        // 通知监考老师
+        if (exam.getInvigilator() != null && !exam.getInvigilator().isBlank()) {
+            try {
+                String[] names = exam.getInvigilator().split("[,，]");
+                for (String name : names) {
+                    String cleanName = name.trim().replace("老师", "").trim();
+                    if (cleanName.isBlank()) continue;
+                    List<User> teachers = userMapper.selectList(new LambdaQueryWrapper<User>()
+                            .eq(User::getRealName, cleanName)
+                            .eq(User::getRoleCode, "TEACHER")
+                            .eq(User::getStatus, 1)
+                            .eq(User::getDeleted, 0));
+                    for (User teacher : teachers) {
+                        notificationService.send(teacher.getId(),
+                                "监考安排通知",
+                                "您被安排为「" + exam.getCourseName() + "」的监考老师。"
+                                        + "考试时间：" + exam.getExamDate() + " " + exam.getStartTime() + "-" + exam.getEndTime()
+                                        + "，地点：" + (exam.getLocation() != null ? exam.getLocation() : "待定"),
+                                "EXAM", exam.getId());
+                    }
+                }
+            } catch (Exception e) {
+                // 通知发送失败不影响
+            }
         }
     }
 
