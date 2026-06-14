@@ -68,7 +68,7 @@
               maxlength="200"
               show-word-limit
               resize="none"
-              placeholder="例如：怎么预约场地？我的活动报名成功了吗？"
+              placeholder="例如：图书馆开放时间？怎么查询考试成绩？"
               @keydown.enter.exact.prevent="submit"
             />
             <div class="ai-assistant-actions">
@@ -332,7 +332,7 @@ function newChat() {
 function resetMessages() {
   messages.value = [{
     role: 'assistant',
-    content: '我是校园助手AI客服，可以回答场地预约、活动报名、签到和通知相关问题。开始新对话吧！'
+    content: '我是校园助手AI客服，可以回答课程查询、考试安排、图书借阅、校园通知和公告相关问题。开始新对话吧！'
   }]
 }
 
