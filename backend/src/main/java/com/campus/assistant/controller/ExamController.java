@@ -82,8 +82,7 @@ public class ExamController {
 
     @PostMapping("/{id}/seats/generate")
     public Result<Void> generateSeats(@PathVariable Long id, @Valid @RequestBody ExamSeatGenerateDTO dto) {
-        dto.setExamId(id);
-        examService.generateSeats(dto);
+        examService.generateSeats(id, dto.getMode());
         return Result.success();
     }
 

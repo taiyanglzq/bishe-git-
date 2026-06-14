@@ -53,7 +53,7 @@ public interface ExamService {
     /**
      * 生成座位
      */
-    void generateSeats(ExamSeatGenerateDTO dto);
+    void generateSeats(Long examId, String mode);
 
     /**
      * 更新单个座位号

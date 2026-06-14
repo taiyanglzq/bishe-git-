@@ -1,7 +1,6 @@
 package com.campus.assistant.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
@@ -9,9 +8,6 @@ import lombok.Data;
  */
 @Data
 public class ExamSeatGenerateDTO {
-
-    @NotNull(message = "考试ID不能为空")
-    private Long examId;
 
     /**
      * 生成模式：

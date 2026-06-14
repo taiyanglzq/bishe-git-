@@ -172,15 +172,15 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void generateSeats(ExamSeatGenerateDTO dto) {
+    public void generateSeats(Long examId, String mode) {
         RoleUtils.requireAny("ADMIN");
-        Exam exam = examMapper.selectById(dto.getExamId());
+        Exam exam = examMapper.selectById(examId);
         if (exam == null || exam.getDeleted() == 1) {
             throw new BusinessException(404, "考试不存在");
         }
         // 删除旧座位
         examSeatMapper.update(null, new LambdaUpdateWrapper<ExamSeat>()
-                .eq(ExamSeat::getExamId, dto.getExamId())
+                .eq(ExamSeat::getExamId, examId)
                 .set(ExamSeat::getDeleted, 1));
 
         // 获取同院系学生
@@ -194,21 +194,21 @@ public class ExamServiceImpl implements ExamService {
         }
 
         List<ExamSeat> seats;
-        switch (dto.getMode()) {
+        switch (mode) {
             case "STUDENT_NO":
                 students.sort((a, b) -> {
                     String snoA = a.getStudentNo() == null ? "" : a.getStudentNo();
                     String snoB = b.getStudentNo() == null ? "" : b.getStudentNo();
                     return snoA.compareTo(snoB);
                 });
-                seats = assignSequential(dto.getExamId(), students);
+                seats = assignSequential(examId, students);
                 break;
             case "RANDOM":
                 Collections.shuffle(students);
-                seats = assignSequential(dto.getExamId(), students);
+                seats = assignSequential(examId, students);
                 break;
             default: // CLASSROOM
-                seats = assignClassroom(dto.getExamId(), students);
+                seats = assignClassroom(examId, students);
                 break;
         }
 
