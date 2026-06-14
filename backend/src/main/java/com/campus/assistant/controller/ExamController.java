@@ -81,8 +81,13 @@ public class ExamController {
     }
 
     @PostMapping("/{id}/seats/generate")
-    public Result<Void> generateSeats(@PathVariable Long id, @Valid @RequestBody ExamSeatGenerateDTO dto) {
-        examService.generateSeats(id, dto.getMode());
+    public Result<List<ExamSeat>> generateSeats(@PathVariable Long id, @Valid @RequestBody ExamSeatGenerateDTO dto) {
+        return Result.success(examService.generateSeats(id, dto.getMode()));
+    }
+
+    @PutMapping("/{id}/seats/save")
+    public Result<Void> saveSeats(@PathVariable Long id, @RequestBody List<ExamSeat> seats) {
+        examService.saveSeats(id, seats);
         return Result.success();
     }
 

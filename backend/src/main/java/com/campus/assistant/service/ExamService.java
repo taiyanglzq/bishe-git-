@@ -51,9 +51,14 @@ public interface ExamService {
     List<ExamSeat> getSeats(Long examId);
 
     /**
-     * 生成座位
+     * 生成座位（预览，不保存到数据库）
      */
-    void generateSeats(Long examId, String mode);
+    List<ExamSeat> generateSeats(Long examId, String mode);
+
+    /**
+     * 保存生成的座位到数据库
+     */
+    void saveSeats(Long examId, List<ExamSeat> seats);
 
     /**
      * 更新单个座位号

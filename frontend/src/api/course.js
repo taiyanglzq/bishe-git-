@@ -58,6 +58,10 @@ export function generateExamSeats(examId, data) {
   return request.post(`/exam/${examId}/seats/generate`, data)
 }
 
+export function saveExamSeats(examId, seats) {
+  return request.put(`/exam/${examId}/seats/save`, seats)
+}
+
 export function updateExamSeat(seatId, seatNo) {
   return request.put(`/exam/seats/${seatId}?seatNo=${encodeURIComponent(seatNo)}`)
 }

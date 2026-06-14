@@ -268,8 +268,11 @@
                 <el-option label="按学号排序" value="STUDENT_NO" />
                 <el-option label="随机分配" value="RANDOM" />
               </el-select>
-              <el-button type="primary" @click="handleGenerateSeats">生成座位</el-button>
-              <el-button :disabled="!seats.length" @click="exportSeats">导出座位表</el-button>
+              <el-button type="primary" @click="handleGenerateSeats">生成预览</el-button>
+              <el-button type="success" :disabled="!seats.length || seatsSaved" @click="handleSaveSeats">保存座位</el-button>
+              <el-button :disabled="!seats.length || !seatsSaved" @click="exportSeats">导出座位表</el-button>
+              <el-tag v-if="seats.length && !seatsSaved" size="small" type="warning">预览模式，尚未保存</el-tag>
+              <el-tag v-if="seatsSaved" size="small" type="success">已保存</el-tag>
               <el-button @click="backToExamList">返回</el-button>
             </div>
             <div v-if="currentExamId" class="panel-card" style="margin-top: 12px;">
@@ -304,7 +307,7 @@ import { AlarmClock, UserFilled, ChatLineSquare, Collection, Search } from '@ele
 import { useAuthStore } from '../../stores/auth'
 import { createUser, deleteUser, getUserPage, updateUser } from '../../api/auth'
 import { createBook, deleteBook, getBookManagePage, getBorrowPage, updateBook } from '../../api/book'
-import { createExam, deleteExam, getExamManagePage, getExamSeats, generateExamSeats, getExamSeatsExportUrl, updateExam, updateExamSeat } from '../../api/course'
+import { createExam, deleteExam, getExamManagePage, getExamSeats, generateExamSeats, saveExamSeats, getExamSeatsExportUrl, updateExam, updateExamSeat } from '../../api/course'
 import { approveNotice, createNotice, deleteNotice, getNoticeManagePage, rejectNotice, updateNotice } from '../../api/notice'
 import { uploadImage } from '../../api/upload'
 
@@ -350,6 +353,7 @@ const currentExamId = ref(null)
 const currentExamName = ref('')
 const seats = ref([])
 const seatMode = ref('CLASSROOM')
+const seatsSaved = ref(false)
 
 const userForm = reactive({ id: null, loginNo: '', realName: '', college: '计算机学院', roleCode: 'STUDENT', password: '123456', status: 1 })
 const noticeForm = reactive({ id: null, title: '', category: '系统通知', content: '', scopeType: 'COLLEGE', scopeCollege: '计算机学院', status: 1 })
@@ -513,20 +517,34 @@ function showSeat(row) {
   examSubTab.value = 'seat-manage'
 }
 
-function backToExamList() { currentExamId.value = null; examSubTab.value = 'exam-list' }
 
 async function loadSeats(examId) {
   try {
     const data = await getExamSeats(examId)
     seats.value = Array.isArray(data) ? data : []
-  } catch { seats.value = [] }
+    seatsSaved.value = seats.value.length > 0
+  } catch { seats.value = []; seatsSaved.value = false }
 }
+
+function backToExamList() { currentExamId.value = null; examSubTab.value = 'exam-list'; seatsSaved.value = false }
 
 async function handleGenerateSeats() {
   if (!currentExamId.value) return
-  await generateExamSeats(currentExamId.value, { mode: seatMode.value })
-  ElMessage.success('座位生成成功')
-  await loadSeats(currentExamId.value)
+  try {
+    const data = await generateExamSeats(currentExamId.value, { mode: seatMode.value })
+    seats.value = Array.isArray(data) ? data : []
+    seatsSaved.value = false
+    ElMessage.success('座位生成预览')
+  } catch { ElMessage.error('座位生成失败') }
+}
+
+async function handleSaveSeats() {
+  if (!currentExamId.value || !seats.value.length) return
+  try {
+    await saveExamSeats(currentExamId.value, seats.value)
+    seatsSaved.value = true
+    ElMessage.success('座位保存成功')
+  } catch { ElMessage.error('座位保存失败') }
 }
 
 async function handleUpdateSeat(row) {

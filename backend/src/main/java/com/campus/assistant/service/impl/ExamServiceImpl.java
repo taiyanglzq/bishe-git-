@@ -171,19 +171,13 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void generateSeats(Long examId, String mode) {
+    public List<ExamSeat> generateSeats(Long examId, String mode) {
         RoleUtils.requireAny("ADMIN");
         Exam exam = examMapper.selectById(examId);
         if (exam == null || exam.getDeleted() == 1) {
             throw new BusinessException(404, "考试不存在");
         }
-        // 删除旧座位
-        examSeatMapper.update(null, new LambdaUpdateWrapper<ExamSeat>()
-                .eq(ExamSeat::getExamId, examId)
-                .set(ExamSeat::getDeleted, 1));
 
-        // 获取同院系学生
         List<User> students = userMapper.selectList(new LambdaQueryWrapper<User>()
                 .eq(User::getCollege, exam.getCollege())
                 .eq(User::getRoleCode, "STUDENT")
@@ -212,7 +206,24 @@ public class ExamServiceImpl implements ExamService {
                 break;
         }
 
+        return seats;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveSeats(Long examId, List<ExamSeat> seats) {
+        RoleUtils.requireAny("ADMIN");
+        // 删除旧座位
+        examSeatMapper.update(null, new LambdaUpdateWrapper<ExamSeat>()
+                .eq(ExamSeat::getExamId, examId)
+                .set(ExamSeat::getDeleted, 1));
+        // 批量插入
+        LocalDateTime now = LocalDateTime.now();
         for (ExamSeat seat : seats) {
+            seat.setId(null);
+            seat.setDeleted(0);
+            seat.setCreateTime(now);
+            seat.setUpdateTime(now);
             examSeatMapper.insert(seat);
         }
     }
