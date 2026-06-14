@@ -200,16 +200,16 @@
             </div>
           </el-tab-pane>
         </el-tabs>
-      <el-tab-pane name="exam">
+      <el-tab-pane v-if="isAdmin" name="exam">
         <template #label><span class="tab-label"><el-icon><AlarmClock /></el-icon> 考试管理</span></template>
         <el-tabs v-model="examSubTab">
           <el-tab-pane name="exam-list">
             <template #label><span class="tab-label">考试列表</span></template>
             <div class="mgmt-form-row">
               <el-input v-model="examForm.courseName" placeholder="考试科目" style="width: 200px;" />
-              <el-date-picker v-model="examForm.examDate" value-format="YYYY-MM-DD" placeholder="考试日期" style="width: 150px;" />
-              <el-time-picker v-model="examForm.startTime" placeholder="开始时间" style="width: 130px;" />
-              <el-time-picker v-model="examForm.endTime" placeholder="结束时间" style="width: 130px;" />
+              <el-input v-model="examForm.examDate" placeholder="考试日期 (2026-06-22)" style="width: 160px;" />
+              <el-input v-model="examForm.startTime" placeholder="开始时间 (09:00)" style="width: 130px;" />
+              <el-input v-model="examForm.endTime" placeholder="结束时间 (11:00)" style="width: 130px;" />
               <el-input v-model="examForm.location" placeholder="考试地点" style="width: 160px;" />
               <el-input v-model="examForm.invigilator" placeholder="监考老师（逗号分隔）" style="width: 200px;" />
               <el-select v-model="examForm.examType" placeholder="考试类型" style="width: 120px;">
@@ -470,9 +470,13 @@ function formatTime(time) {
 function changeExamPage(p) { examPage.current = p; loadExams() }
 
 async function loadExams() {
-  const data = await getExamManagePage({ current: examPage.current, size: PAGE_SIZE })
-  exams.value = data.records || []
-  examPage.total = data.total || 0
+  try {
+    const data = await getExamManagePage({ current: examPage.current, size: PAGE_SIZE })
+    exams.value = data.records || []
+    examPage.total = data.total || 0
+  } catch {
+    exams.value = []
+  }
 }
 
 async function submitExam() {
