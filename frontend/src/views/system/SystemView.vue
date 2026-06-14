@@ -335,7 +335,7 @@ const users = ref([])
 const notices = ref([])
 const books = ref([])
 
-const PAGE_SIZE = 15
+const PAGE_SIZE = 10
 const userPage = reactive({ current: 1, total: 0 })
 const noticePage = reactive({ current: 1, total: 0 })
 const bookPage = reactive({ current: 1, total: 0 })
