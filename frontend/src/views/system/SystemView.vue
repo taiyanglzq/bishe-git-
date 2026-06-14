@@ -107,7 +107,7 @@
 
       <el-tab-pane v-if="isAdmin" name="book">
         <template #label><span class="tab-label"><el-icon><Collection /></el-icon> 图书管理</span></template>
-        <el-tabs>
+        <el-tabs v-model="bookSubTab">
           <el-tab-pane name="book-list">
             <template #label><span class="tab-label">图书列表</span></template>
             <div class="mgmt-form-row">
@@ -246,6 +246,7 @@ const bookPage = reactive({ current: 1, total: 0 })
 const borrowRecords = ref([])
 const borrowPageInfo = reactive({ current: 1, total: 0 })
 const borrowKeyword = ref('')
+const bookSubTab = ref('book-list')
 
 const userForm = reactive({ id: null, loginNo: '', realName: '', college: '计算机学院', roleCode: 'STUDENT', password: '123456', status: 1 })
 const noticeForm = reactive({ id: null, title: '', category: '系统通知', content: '', scopeType: 'COLLEGE', scopeCollege: '计算机学院', status: 1 })
