@@ -5,6 +5,7 @@ import com.campus.assistant.dto.BookBorrowDTO;
 import com.campus.assistant.dto.BookSaveDTO;
 import com.campus.assistant.entity.Book;
 import com.campus.assistant.entity.BookBorrow;
+import com.campus.assistant.vo.BookBorrowVO;
 
 import java.util.List;
 
@@ -57,4 +58,9 @@ public interface BookService {
      * 获取当前用户的借阅记录
      */
     List<BookBorrow> myBorrows();
+
+    /**
+     * 管理端分页查询借阅记录（含借阅人信息），仅 ADMIN
+     */
+    com.baomidou.mybatisplus.extension.plugins.pagination.Page<BookBorrowVO> borrowPage(Long current, Long size);
 }

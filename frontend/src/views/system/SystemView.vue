@@ -107,59 +107,95 @@
 
       <el-tab-pane v-if="isAdmin" name="book">
         <template #label><span class="tab-label"><el-icon><Collection /></el-icon> 图书管理</span></template>
-        <div class="mgmt-form-row">
-          <image-uploader label="封面图片" :url="bookForm.coverUrl" @uploaded="bookForm.coverUrl = $event" />
-          <el-input v-model="bookForm.title" placeholder="书名" style="width: 200px;" />
-          <el-input v-model="bookForm.author" placeholder="作者" style="width: 140px;" />
-          <el-input v-model="bookForm.isbn" placeholder="ISBN" style="width: 160px;" />
-          <el-input v-model="bookForm.publisher" placeholder="出版社" style="width: 160px;" />
-          <el-input v-model="bookForm.publishYear" placeholder="出版年份" style="width: 110px;" />
-          <el-select v-model="bookForm.category" placeholder="分类" style="width: 130px;">
-            <el-option label="计算机科学" value="计算机科学" />
-            <el-option label="数学" value="数学" />
-            <el-option label="外语" value="外语" />
-            <el-option label="文学" value="文学" />
-          </el-select>
-          <el-input v-model="bookForm.location" placeholder="馆藏位置" style="width: 180px;" />
-          <el-input-number v-model="bookForm.totalCount" :min="1" style="width: 100px;" />
-          <el-input v-model="bookForm.description" placeholder="图书简介" style="width: 280px;" />
-          <el-button type="primary" @click="submitBook">{{ bookForm.id ? '更新' : '新增' }}</el-button>
-          <el-button @click="resetBookForm">清空</el-button>
-          <el-button @click="loadBooks">刷新</el-button>
-        </div>
-        <div class="panel-card">
-          <div class="panel-card-body" style="padding: 0;">
-            <el-table :data="books" border style="border: none;">
-              <el-table-column label="封面" width="80">
-                <template #default="{ row }">
-                  <img v-if="row.coverUrl" :src="assetUrl(row.coverUrl)" class="table-thumb" alt="封面" />
-                  <span v-else class="table-no-thumb">无</span>
-                </template>
-              </el-table-column>
-              <el-table-column prop="title" label="书名" min-width="150" show-overflow-tooltip />
-              <el-table-column prop="author" label="作者" width="100" />
-              <el-table-column prop="category" label="分类" width="110" />
-              <el-table-column prop="publisher" label="出版社" width="140" show-overflow-tooltip />
-              <el-table-column label="库存" width="100">
-                <template #default="{ row }">{{ row.availableCount || 0 }}/{{ row.totalCount || 0 }}</template>
-              </el-table-column>
-              <el-table-column label="操作" width="150">
-                <template #default="{ row }">
-                  <el-button size="small" text type="primary" @click="editBook(row)">编辑</el-button>
-                  <el-button size="small" text type="danger" @click="removeBook(row.id)">删除</el-button>
-                </template>
-              </el-table-column>
-            </el-table>
-            <el-pagination
-              class="mgmt-pagination"
-              layout="prev, pager, next, total"
-              :current-page="bookPage.current"
-              :page-size="PAGE_SIZE"
-              :total="bookPage.total"
-              @current-change="changeBookPage"
-            />
-          </div>
-        </div>
+        <el-tabs>
+          <el-tab-pane name="book-list">
+            <template #label><span class="tab-label">图书列表</span></template>
+            <div class="mgmt-form-row">
+              <image-uploader label="封面图片" :url="bookForm.coverUrl" @uploaded="bookForm.coverUrl = $event" />
+              <el-input v-model="bookForm.title" placeholder="书名" style="width: 200px;" />
+              <el-input v-model="bookForm.author" placeholder="作者" style="width: 140px;" />
+              <el-input v-model="bookForm.isbn" placeholder="ISBN" style="width: 160px;" />
+              <el-input v-model="bookForm.publisher" placeholder="出版社" style="width: 160px;" />
+              <el-input v-model="bookForm.publishYear" placeholder="出版年份" style="width: 110px;" />
+              <el-select v-model="bookForm.category" placeholder="分类" style="width: 130px;">
+                <el-option label="计算机科学" value="计算机科学" />
+                <el-option label="数学" value="数学" />
+                <el-option label="外语" value="外语" />
+                <el-option label="文学" value="文学" />
+              </el-select>
+              <el-input v-model="bookForm.location" placeholder="馆藏位置" style="width: 180px;" />
+              <el-input-number v-model="bookForm.totalCount" :min="1" style="width: 100px;" />
+              <el-input v-model="bookForm.description" placeholder="图书简介" style="width: 280px;" />
+              <el-button type="primary" @click="submitBook">{{ bookForm.id ? '更新' : '新增' }}</el-button>
+              <el-button @click="resetBookForm">清空</el-button>
+              <el-button @click="loadBooks">刷新</el-button>
+            </div>
+            <div class="panel-card" style="margin-top: 12px;">
+              <div class="panel-card-body" style="padding: 0;">
+                <el-table :data="books" border style="border: none;">
+                  <el-table-column label="封面" width="80">
+                    <template #default="{ row }">
+                      <img v-if="row.coverUrl" :src="assetUrl(row.coverUrl)" class="table-thumb" alt="封面" />
+                      <span v-else class="table-no-thumb">无</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="title" label="书名" min-width="150" show-overflow-tooltip />
+                  <el-table-column prop="author" label="作者" width="100" />
+                  <el-table-column prop="category" label="分类" width="110" />
+                  <el-table-column prop="publisher" label="出版社" width="140" show-overflow-tooltip />
+                  <el-table-column label="库存" width="100">
+                    <template #default="{ row }">{{ row.availableCount || 0 }}/{{ row.totalCount || 0 }}</template>
+                  </el-table-column>
+                  <el-table-column label="操作" width="150">
+                    <template #default="{ row }">
+                      <el-button size="small" text type="primary" @click="editBook(row)">编辑</el-button>
+                      <el-button size="small" text type="danger" @click="removeBook(row.id)">删除</el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
+                <el-pagination
+                  class="mgmt-pagination"
+                  layout="prev, pager, next, total"
+                  :current-page="bookPage.current"
+                  :page-size="PAGE_SIZE"
+                  :total="bookPage.total"
+                  @current-change="changeBookPage"
+                />
+              </div>
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane name="borrow-record">
+            <template #label><span class="tab-label">借阅记录</span></template>
+            <div class="panel-card" style="margin-top: 12px;">
+              <div class="panel-card-body" style="padding: 0;">
+                <el-table :data="borrowRecords" border style="border: none;">
+                  <el-table-column prop="bookTitle" label="书名" min-width="160" show-overflow-tooltip />
+                  <el-table-column prop="bookAuthor" label="作者" width="100" />
+                  <el-table-column prop="userRealName" label="借阅人" width="100" />
+                  <el-table-column prop="userStudentNo" label="学号" width="140" />
+                  <el-table-column label="借阅时间" width="160">
+                    <template #default="{ row }">{{ formatTime(row.borrowTime) }}</template>
+                  </el-table-column>
+                  <el-table-column label="状态" width="100">
+                    <template #default="{ row }">
+                      <el-tag v-if="row.status === 'BORROWED'" size="small" type="warning">借阅中</el-tag>
+                      <el-tag v-else size="small" type="info">已归还</el-tag>
+                    </template>
+                  </el-table-column>
+                </el-table>
+                <el-pagination
+                  class="mgmt-pagination"
+                  layout="prev, pager, next, total"
+                  :current-page="borrowPageInfo.current"
+                  :page-size="PAGE_SIZE"
+                  :total="borrowPageInfo.total"
+                  @current-change="changeBorrowPage"
+                />
+              </div>
+            </div>
+          </el-tab-pane>
+        </el-tabs>
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -171,7 +207,7 @@ import { ElButton, ElMessage, ElMessageBox, ElUpload } from 'element-plus'
 import { UserFilled, ChatLineSquare, Collection } from '@element-plus/icons-vue'
 import { useAuthStore } from '../../stores/auth'
 import { createUser, deleteUser, getUserPage, updateUser } from '../../api/auth'
-import { createBook, deleteBook, getBookManagePage, updateBook } from '../../api/book'
+import { createBook, deleteBook, getBookManagePage, getBorrowPage, updateBook } from '../../api/book'
 import { approveNotice, createNotice, deleteNotice, getNoticeManagePage, rejectNotice, updateNotice } from '../../api/notice'
 import { uploadImage } from '../../api/upload'
 
@@ -203,6 +239,8 @@ const PAGE_SIZE = 10
 const userPage = reactive({ current: 1, total: 0 })
 const noticePage = reactive({ current: 1, total: 0 })
 const bookPage = reactive({ current: 1, total: 0 })
+const borrowRecords = ref([])
+const borrowPageInfo = reactive({ current: 1, total: 0 })
 
 const userForm = reactive({ id: null, loginNo: '', realName: '', college: '计算机学院', roleCode: 'STUDENT', password: '123456', status: 1 })
 const noticeForm = reactive({ id: null, title: '', category: '系统通知', content: '', scopeType: 'COLLEGE', scopeCollege: '计算机学院', status: 1 })
@@ -233,11 +271,12 @@ async function loadNotices() {
 function changeUserPage(p) { userPage.current = p; loadUsers() }
 function changeNoticePage(p) { noticePage.current = p; loadNotices() }
 function changeBookPage(p) { bookPage.current = p; loadBooks() }
+function changeBorrowPage(p) { borrowPageInfo.current = p; loadBorrows() }
 
 async function loadAll() {
   if (!isAdmin.value && activeTab.value === 'user') activeTab.value = 'notice'
   const tasks = [loadNotices()]
-  if (isAdmin.value) tasks.push(loadUsers(), loadBooks())
+  if (isAdmin.value) tasks.push(loadUsers(), loadBooks(), loadBorrows())
   await Promise.all(tasks)
 }
 
@@ -299,6 +338,20 @@ async function removeBook(id) { if (!await confirmDelete('图书')) return; awai
 
 function editBook(row) { Object.assign(bookForm, { id: row.id, title: row.title, author: row.author || '', isbn: row.isbn || '', publisher: row.publisher || '', publishYear: row.publishYear || '', category: row.category || '计算机科学', location: row.location || '', totalCount: row.totalCount || 1, availableCount: row.availableCount ?? 1, description: row.description || '', coverUrl: row.coverUrl || '', status: row.status ?? 1 }) }
 function resetBookForm() { Object.assign(bookForm, { id: null, title: '', author: '', isbn: '', publisher: '', publishYear: '', category: '计算机科学', location: '', totalCount: 1, availableCount: 1, description: '', coverUrl: '', status: 1 }) }
+
+async function loadBorrows() {
+  const data = await getBorrowPage({ current: borrowPageInfo.current, size: PAGE_SIZE })
+  borrowRecords.value = data.records || []
+  borrowPageInfo.total = data.total || 0
+}
+
+function formatTime(time) {
+  if (!time) return '-'
+  const d = new Date(time)
+  if (Number.isNaN(d.getTime())) return time
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
 
 onMounted(() => {
   if (isAdmin.value) activeTab.value = 'user'

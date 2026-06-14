@@ -36,3 +36,7 @@ export function returnBook(bookId) {
 export function getMyBorrows() {
   return request.get('/book/my-borrows')
 }
+
+export function getBorrowPage(params) {
+  return request.get('/book/borrow/page', { params })
+}

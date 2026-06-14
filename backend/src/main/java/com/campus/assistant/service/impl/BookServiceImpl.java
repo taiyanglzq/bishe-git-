@@ -10,9 +10,12 @@ import com.campus.assistant.dto.BookBorrowDTO;
 import com.campus.assistant.dto.BookSaveDTO;
 import com.campus.assistant.entity.Book;
 import com.campus.assistant.entity.BookBorrow;
+import com.campus.assistant.entity.User;
 import com.campus.assistant.mapper.BookBorrowMapper;
 import com.campus.assistant.mapper.BookMapper;
+import com.campus.assistant.mapper.UserMapper;
 import com.campus.assistant.service.BookService;
+import com.campus.assistant.vo.BookBorrowVO;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -33,6 +36,7 @@ public class BookServiceImpl implements BookService {
 
     private final BookMapper bookMapper;
     private final BookBorrowMapper bookBorrowMapper;
+    private final UserMapper userMapper;
     private final RedissonClient redissonClient;
 
     @Override
@@ -242,6 +246,40 @@ public class BookServiceImpl implements BookService {
                 .eq(BookBorrow::getUserId, userId)
                 .eq(BookBorrow::getDeleted, 0)
                 .orderByDesc(BookBorrow::getCreateTime));
+    }
+
+    @Override
+    public Page<BookBorrowVO> borrowPage(Long current, Long size) {
+        RoleUtils.requireAny("ADMIN");
+        Page<BookBorrow> page = bookBorrowMapper.selectPage(Page.of(current, size),
+                new LambdaQueryWrapper<BookBorrow>()
+                        .eq(BookBorrow::getDeleted, 0)
+                        .orderByDesc(BookBorrow::getCreateTime));
+        List<Long> bookIds = page.getRecords().stream().map(BookBorrow::getBookId).distinct().toList();
+        List<Long> userIds = page.getRecords().stream().map(BookBorrow::getUserId).distinct().toList();
+        java.util.Map<Long, Book> bookMap = bookIds.isEmpty() ? java.util.Collections.emptyMap()
+                : bookMapper.selectBatchIds(bookIds).stream().collect(java.util.stream.Collectors.toMap(Book::getId, b -> b));
+        java.util.Map<Long, User> userMap = userIds.isEmpty() ? java.util.Collections.emptyMap()
+                : userMapper.selectBatchIds(userIds).stream().collect(java.util.stream.Collectors.toMap(User::getId, u -> u));
+        List<BookBorrowVO> voList = page.getRecords().stream().map(b -> {
+            Book book = bookMap.get(b.getBookId());
+            User user = userMap.get(b.getUserId());
+            return BookBorrowVO.builder()
+                    .id(b.getId())
+                    .bookId(b.getBookId())
+                    .bookTitle(book == null ? "未知图书" : book.getTitle())
+                    .bookAuthor(book == null ? "" : book.getAuthor())
+                    .userId(b.getUserId())
+                    .userRealName(user == null ? "未知用户" : user.getRealName())
+                    .userStudentNo(user == null ? "" : user.getStudentNo())
+                    .borrowTime(b.getBorrowTime())
+                    .returnTime(b.getReturnTime())
+                    .status(b.getStatus())
+                    .build();
+        }).toList();
+        Page<BookBorrowVO> voPage = Page.of(current, size, page.getTotal());
+        voPage.setRecords(voList);
+        return voPage;
     }
 
     private Long requireLogin() {

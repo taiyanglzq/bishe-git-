@@ -6,6 +6,7 @@ import com.campus.assistant.dto.BookBorrowDTO;
 import com.campus.assistant.dto.BookSaveDTO;
 import com.campus.assistant.entity.Book;
 import com.campus.assistant.entity.BookBorrow;
+import com.campus.assistant.vo.BookBorrowVO;
 
 import java.util.List;
 import com.campus.assistant.service.BookService;
@@ -82,5 +83,11 @@ public class BookController {
     @GetMapping("/my-borrows")
     public Result<List<BookBorrow>> myBorrows() {
         return Result.success(bookService.myBorrows());
+    }
+
+    @GetMapping("/borrow/page")
+    public Result<Page<BookBorrowVO>> borrowPage(@RequestParam(defaultValue = "1") Long current,
+                                                  @RequestParam(defaultValue = "10") Long size) {
+        return Result.success(bookService.borrowPage(current, size));
     }
 }
