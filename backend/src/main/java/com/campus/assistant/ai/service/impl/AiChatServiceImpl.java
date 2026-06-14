@@ -51,7 +51,7 @@ public class AiChatServiceImpl implements AiChatService {
 
         String aiAnswer = deepSeekClient.chat(systemPrompt, fullPrompt);
         if (aiAnswer == null || aiAnswer.isBlank()) {
-            aiAnswer = "当前AI助手暂时无法获取更详细的信息。你可以尝试从[场地预约][活动签到][校园公告][通知中心]这些模块继续查看。";
+            aiAnswer = "当前AI助手暂时无法获取更详细的信息。你可以尝试从[课程查询][考试安排][图书检索][校园公告][通知中心]这些模块继续查看。";
         }
 
         saveHistoryAfterReply(currentUser, sessionId, question, aiAnswer);
