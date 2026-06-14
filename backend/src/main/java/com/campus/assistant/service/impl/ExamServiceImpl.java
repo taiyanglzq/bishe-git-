@@ -144,6 +144,7 @@ public class ExamServiceImpl implements ExamService {
         exam.setStatus(dto.getStatus() == null ? exam.getStatus() : dto.getStatus());
         exam.setUpdateTime(LocalDateTime.now());
         examMapper.updateById(exam);
+        sendExamNotification(exam);
     }
 
     @Override
